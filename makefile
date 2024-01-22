@@ -29,7 +29,6 @@ POLICE	= -Wall
 DEBUG	= 
 DEBUG	= -g
 #DEBUG	= -g -pg
-OPTMIZ	=
 OPTMIZ	= -O2
 #DEFINE	= -D_UNIX_ -D_MPI_ -D_OMP_
 #DEFINE = -D_UNIX_ -D_OMP_

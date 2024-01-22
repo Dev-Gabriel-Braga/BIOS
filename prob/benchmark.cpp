@@ -50,6 +50,8 @@
 #include <cmath>
 #include <math.h>
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 
 #include "benchmark.h"
 #include "gbldef.h"
@@ -100,7 +102,11 @@ static const bool registeredProb[] =
   cProblemFactory :: Register("ZDT6"              , MakeProb<cZDT6C>),
   cProblemFactory :: Register("ZDT1"              , MakeProb<cZDT1C>),
   cProblemFactory :: Register("SCH"               , MakeProb<cSCHC>),
-  cProblemFactory :: Register("KUR"               , MakeProb<cKURC>)
+  cProblemFactory :: Register("KUR"               , MakeProb<cKURC>),
+  cProblemFactory :: Register("S3BTruss" , MakeProb<cS3BTruss>),
+  cProblemFactory :: Register("S3BTrussFAST"  , MakeProb<cS3BTrussFAST>),
+  cProblemFactory :: Register("S3BTrussABAQUS"  , MakeProb<cS3BTrussABAQUS>),
+  cProblemFactory :: Register("S3BTrussDIANA"  , MakeProb<cS3BTrussDIANA>)
 };
 
 // -------------------------------------------------------------------------
@@ -2186,6 +2192,171 @@ void cKURC :: Evaluate(cVector &x, cVector &c, cVector &fobjs)
 
   fobjs[1] = aux3;
 }
+
+// -------------------------------------------------------------------------
+// Class cS3BTruss:
+// -------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------
+// Public methods:
+//
+
+// ============================ cS3BTruss ===============================
+cS3BTruss :: cS3BTruss(void)
+{
+  NumVar = 2;
+  NumConstr = 3;
+  NumObj = 1;
+
+  Low = new double[NumVar];
+  Upp = new double[NumVar];
+
+  Low[0] = 1e-6;
+  Upp[0] = 5.0;
+  Low[1] = 1e-6;
+  Upp[1] = 5.0;
+}
+
+// ============================ Evaluate ===============================
+
+void cS3BTruss :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
+{
+  // Truss Parameters
+  cVector & A = x;
+  double l = 1;
+  double rho = 7800;
+
+  // Running Analysis
+  double sigma [3];
+  this->Analysis(A, sigma);
+
+  // Constraints Limits
+  double sigma_a = 150e6;
+
+  // Stresses Constraints
+  c[0] = sigma[0] / sigma_a - 1;
+  c[1] = sigma[1] / sigma_a - 1;
+  if (sigma[2] < 0)
+    c[2] = -sigma[2] / sigma_a - 1;
+  else
+    c[2] = sigma[2] / sigma_a - 1;
+
+  // Objetive Function
+  double mass = l * rho * (2 * sqrt(2) * A[0] + A[1]);
+
+  // Objetive Evaluation
+  fobjs[0] = mass;
+}
+
+void cS3BTruss :: Analysis(cVector & A, double * sigma)
+{
+  // Load Parameters
+  double P = 50e3;
+  double theta = 30 * PI / 180;
+  double P_u = P * cos(theta);
+  double P_v = P * sin(theta);
+
+  // Analytical Stresses
+  sigma[0] = 1 / sqrt(2) * (P_u / A[0] + P_v / (A[0] + sqrt(2) * A[1]));
+  sigma[1] = sqrt(2) * P_v / (A[0] + sqrt(2) * A[1]);
+  sigma[2] = 1 / sqrt(2) * (-P_u / A[0] + P_v / (A[0] + sqrt(2) * A[1]));
+}
+
+// ============================ cS3BTrussFAST :: Analysis ===============================
+
+void cS3BTrussFAST :: Analysis(cVector & A, double * sigma)
+{
+  // Calculating Radius to Replace
+  double r [2] {
+    sqrt(A[0] / PI),
+    sqrt(A[1] / PI)
+  };
+
+  // Replacing Area Values in Input File
+  int start_position {0};
+  string entry;
+  fstream dat_file ("teste.dat");
+  dat_file << scientific << setprecision(5);
+  while (dat_file >> entry)
+  {
+    if (entry == "%SECTION.BAR.CIRCLE")
+    {
+      start_position = dat_file.tellp();
+      break;
+    }
+  }
+  dat_file.seekp(start_position + 13);
+  dat_file << r[0];
+  dat_file.seekp(start_position + 34);
+  dat_file << r[1];
+  dat_file.close();
+
+  // Calculating Stresses by Numerical Analysis
+  system("fast teste -silent");
+
+  // Reading Results
+  fstream pos_file ("teste.pos");
+  string trash;
+  while (pos_file >> entry)
+  {
+    if (entry == "%RESULT.CASE.STEP.ELEMENT.NODAL.SCALAR.DATA")
+    {
+      pos_file >> trash >> trash >> sigma[1];
+      pos_file >> trash >> trash >> sigma[0];
+      pos_file >> trash >> trash >> sigma[2];
+      break;
+    }
+  }
+  pos_file.close();
+  sigma[0] /= A[0];
+  sigma[1] /= A[1];
+  sigma[2] /= A[0];
+}
+
+// ============================ cS3BTrussABAQUS :: Analysis ===============================
+
+void cS3BTrussABAQUS :: Analysis(cVector & A, double * sigma)
+{
+  // Replacing Area Values in Input File
+  int start_position_1 {675};
+  int start_position_2 {587};
+  string entry;
+  fstream inp_file ("teste.inp");
+  inp_file << scientific << setprecision(5);
+  inp_file.seekp(start_position_1);
+  inp_file << A[0];
+  inp_file.seekp(start_position_2);
+  inp_file << A[1];
+  inp_file.close();
+
+  // Calculating Stresses by Numerical Analysis and Extracting Results
+  system("cmd.exe /c abaqus interactive job=teste input=teste.inp ask_delete=OFF > nul");
+  system("cmd.exe /c abaqus odbreport odb=teste.odb field='S' > teste.txt");
+
+  // Reading Results
+  fstream txt_file;
+  txt_file.open("teste.txt");
+  string trash;
+  while (txt_file >> entry)
+  {
+    if (entry == "STRUCTURE-1")
+    {
+      txt_file >> trash >> trash >> sigma[1];
+      txt_file >> trash >> trash >> trash >> trash >> trash >> sigma[0];
+      txt_file >> trash >> trash >> trash >> trash >> trash >> sigma[2];
+      break;
+    }
+  }
+  txt_file.close();
+  cout << sigma[0] << "\n";
+  cout << sigma[1] << "\n";
+  cout << sigma[2] << "\n";
+}
+
+// ============================ cS3BTrussDIANA :: Analysis ===============================
+
+void cS3BTrussDIANA :: Analysis(cVector & A, double * sigma)
+{}
 
 // =========================== End of file =================================
 

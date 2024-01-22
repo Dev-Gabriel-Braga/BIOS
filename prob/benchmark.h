@@ -601,4 +601,44 @@ class cKURC : public cBenchContinuous
    void  Evaluate(cVector&, cVector &, cVector &);
 };
 
+//--------------------------------------------------------------------------
+// Definition of S3BTruss class:
+//
+// Optimization problem Symmetric Three-Bar Truss. This problem is an engineering
+// optimization problem, which deals with the weight optimization of a symmetric 
+// three-bar truss considering stress, displacement and frequency related 
+// constraints [1]. In this class, the problem is solved using continuous variables.
+//
+// [1] Arora JS (2017) Introduction to optimum design, 3rd edn. Academic 
+// Press, Cambridge, p. 50-54.
+//
+
+class cS3BTruss : public cBenchContinuous
+{
+  public:
+               cS3BTruss(void);
+  virtual     ~cS3BTruss(void) {};
+  void         Evaluate(cVector &, cVector &, cVector &);
+  void         EvalExactFobj(cVector &, double &) {};
+  void         EvalExactConstraint(int, cVector &, double &) {};
+  void         GetApproxObj(bool * o) { o[0] = 1; }
+  void         GetApproxConstr(bool * c) { c[0] = 1; c[1] = 1; c[2] = 1; }
+  virtual void Analysis(cVector &, double *);
+};
+
+class cS3BTrussFAST : public cS3BTruss {
+  public:
+    void Analysis(cVector &, double *);
+};
+
+class cS3BTrussABAQUS : public cS3BTruss {
+  public:
+    void Analysis(cVector &, double *);
+};
+
+class cS3BTrussDIANA : public cS3BTruss {
+  public:
+    void Analysis(cVector &, double *);
+};
+
 #endif
