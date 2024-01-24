@@ -2211,10 +2211,8 @@ cS3BTruss :: cS3BTruss(void)
   Low = new double[NumVar];
   Upp = new double[NumVar];
 
-  Low[0] = 1e-6;
-  Upp[0] = 5.0;
-  Low[1] = 1e-6;
-  Upp[1] = 5.0;
+  Low[0] = Low[1] = 1e-8;
+  Upp[0] = Upp[1] = 10.0;
 }
 
 // ============================ Evaluate ===============================
@@ -2330,12 +2328,11 @@ void cS3BTrussABAQUS :: Analysis(cVector & A, double * sigma)
   inp_file.close();
 
   // Calculating Stresses by Numerical Analysis and Extracting Results
-  system("cmd.exe /c abaqus interactive job=teste input=teste.inp ask_delete=OFF > nul");
+  system("cmd.exe /c abaqus interactive job=teste input=teste.inp ask_delete=OFF");
   system("cmd.exe /c abaqus odbreport odb=teste.odb field='S' > teste.txt");
 
   // Reading Results
-  fstream txt_file;
-  txt_file.open("teste.txt");
+  fstream txt_file ("teste.txt");
   string trash;
   while (txt_file >> entry)
   {
@@ -2356,7 +2353,30 @@ void cS3BTrussABAQUS :: Analysis(cVector & A, double * sigma)
 // ============================ cS3BTrussDIANA :: Analysis ===============================
 
 void cS3BTrussDIANA :: Analysis(cVector & A, double * sigma)
-{}
+{
+  // Replacing Area Values in Input File
+  int start_position_1 {680};
+  int start_position_2 {760};
+  string entry;
+  fstream dat_file ("teste.dat");
+  dat_file << scientific << setprecision(5);
+  dat_file.seekp(start_position_1);
+  dat_file << A[0];
+  dat_file.seekp(start_position_2);
+  dat_file << A[1];
+  dat_file.close();
+
+  // Calculating Stresses by Numerical Analysis
+  system("cmd.exe /c diana teste");
+
+  // Reading Results
+  fstream tb_file ("teste.tb");
+  // To Implement;
+  tb_file.close();
+  cout << sigma[0] << "\n";
+  cout << sigma[1] << "\n";
+  cout << sigma[2] << "\n";
+}
 
 // =========================== End of file =================================
 
