@@ -52,6 +52,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <vector>
 
 #include "benchmark.h"
 #include "gbldef.h"
@@ -64,8 +65,6 @@
 #include "sysmat.h"
 #include "group.h"
 #include "optsolution.h"
-
-#include <vector>
 
 using namespace std;
 
@@ -103,10 +102,10 @@ static const bool registeredProb[] =
   cProblemFactory :: Register("ZDT1"              , MakeProb<cZDT1C>),
   cProblemFactory :: Register("SCH"               , MakeProb<cSCHC>),
   cProblemFactory :: Register("KUR"               , MakeProb<cKURC>),
-  cProblemFactory :: Register("S3BTruss" , MakeProb<cS3BTruss>),
-  cProblemFactory :: Register("S3BTrussFAST"  , MakeProb<cS3BTrussFAST>),
-  cProblemFactory :: Register("S3BTrussABAQUS"  , MakeProb<cS3BTrussABAQUS>),
-  cProblemFactory :: Register("S3BTrussDIANA"  , MakeProb<cS3BTrussDIANA>)
+  cProblemFactory :: Register("S3BTruss"          , MakeProb<cS3BTruss>),
+  cProblemFactory :: Register("S3BTrussFAST"      , MakeProb<cS3BTrussFAST>),
+  cProblemFactory :: Register("S3BTrussABAQUS"    , MakeProb<cS3BTrussABAQUS>),
+  cProblemFactory :: Register("S3BTrussDIANA"     , MakeProb<cS3BTrussDIANA>)
 };
 
 // -------------------------------------------------------------------------
@@ -2232,12 +2231,10 @@ void cS3BTruss :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
   double sigma_a = 150e6;
 
   // Stresses Constraints
+  if (sigma[2] < 0) sigma[2] *= -1;
   c[0] = sigma[0] / sigma_a - 1;
   c[1] = sigma[1] / sigma_a - 1;
-  if (sigma[2] < 0)
-    c[2] = -sigma[2] / sigma_a - 1;
-  else
-    c[2] = sigma[2] / sigma_a - 1;
+  c[2] = sigma[2] / sigma_a - 1;
 
   // Objetive Function
   double mass = l * rho * (2 * sqrt(2) * A[0] + A[1]);
@@ -2299,16 +2296,16 @@ void cS3BTrussFAST :: Analysis(cVector & A, double * sigma)
   {
     if (entry == "%RESULT.CASE.STEP.ELEMENT.NODAL.SCALAR.DATA")
     {
-      pos_file >> trash >> trash >> sigma[1];
       pos_file >> trash >> trash >> sigma[0];
+      pos_file >> trash >> trash >> sigma[1];
       pos_file >> trash >> trash >> sigma[2];
       break;
     }
   }
   pos_file.close();
-  sigma[0] /= A[0];
-  sigma[1] /= A[1];
-  sigma[2] /= A[0];
+  sigma[0] = sigma[0] / A[0];
+  sigma[1] = sigma[1] / A[1];
+  sigma[2] = sigma[2] / A[0];
 }
 
 // ============================ cS3BTrussABAQUS :: Analysis ===============================
@@ -2316,8 +2313,8 @@ void cS3BTrussFAST :: Analysis(cVector & A, double * sigma)
 void cS3BTrussABAQUS :: Analysis(cVector & A, double * sigma)
 {
   // Replacing Area Values in Input File
-  int start_position_1 {675};
-  int start_position_2 {587};
+  int start_position_1 {590};
+  int start_position_2 {675};
   string entry;
   fstream inp_file ("teste.inp");
   inp_file << scientific << setprecision(5);
@@ -2338,16 +2335,13 @@ void cS3BTrussABAQUS :: Analysis(cVector & A, double * sigma)
   {
     if (entry == "STRUCTURE-1")
     {
-      txt_file >> trash >> trash >> sigma[1];
-      txt_file >> trash >> trash >> trash >> trash >> trash >> sigma[0];
+      txt_file >> trash >> trash >> sigma[0];
+      txt_file >> trash >> trash >> trash >> trash >> trash >> sigma[1];
       txt_file >> trash >> trash >> trash >> trash >> trash >> sigma[2];
       break;
     }
   }
   txt_file.close();
-  cout << sigma[0] << "\n";
-  cout << sigma[1] << "\n";
-  cout << sigma[2] << "\n";
 }
 
 // ============================ cS3BTrussDIANA :: Analysis ===============================
@@ -2357,7 +2351,6 @@ void cS3BTrussDIANA :: Analysis(cVector & A, double * sigma)
   // Replacing Area Values in Input File
   int start_position_1 {680};
   int start_position_2 {760};
-  string entry;
   fstream dat_file ("teste.dat");
   dat_file << scientific << setprecision(5);
   dat_file.seekp(start_position_1);
@@ -2371,11 +2364,18 @@ void cS3BTrussDIANA :: Analysis(cVector & A, double * sigma)
 
   // Reading Results
   fstream tb_file ("teste.tb");
-  // To Implement;
+  string entry, trash;
+  while (tb_file >> entry)
+  {
+    if (entry == "Elmnr")
+    {
+      tb_file >> trash >> trash >> trash >> trash >> sigma[0];
+      tb_file >> trash >> trash >> trash >> trash >> sigma[1];
+      tb_file >> trash >> trash >> trash >> trash >> sigma[2];
+      break;
+    }
+  }
   tb_file.close();
-  cout << sigma[0] << "\n";
-  cout << sigma[1] << "\n";
-  cout << sigma[2] << "\n";
 }
 
 // =========================== End of file =================================

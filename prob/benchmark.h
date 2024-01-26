@@ -610,7 +610,7 @@ class cKURC : public cBenchContinuous
 // constraints [1]. In this class, the problem is solved using continuous variables.
 //
 // [1] Arora JS (2017) Introduction to optimum design, 3rd edn. Academic 
-// Press, Cambridge, p. 50-54.
+// Press, Cambridge, p. 50-54, Problem 5.51.
 //
 
 class cS3BTruss : public cBenchContinuous
