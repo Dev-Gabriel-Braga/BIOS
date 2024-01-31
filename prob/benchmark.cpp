@@ -1282,6 +1282,21 @@ void c3BarTrussC :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
   fobjs[0] = w;
 }
 
+// ============================ FindPosition ===============================
+
+int c3BarTrussC :: FindPosition(fstream & stream, string line)
+{
+  string entry;
+  while (getline(stream, entry))
+  {
+    if (entry == line)
+    {
+      return stream.tellp();
+    }
+  }
+  return -1;
+}
+
 // ============================ Analysis ===============================
 
 void c3BarTrussC :: Analysis(cVector & A, double * sigma)
@@ -1308,31 +1323,33 @@ void c3BarTrussCFAST :: Analysis(cVector & A, double * sigma)
     sqrt(A[1] / PI)
   };
 
-  // Replacing Area Values in Input File
-  int start_position {0};
-  string entry;
+  // Opening Input File and Setting Float-point Format
   fstream dat_file (base_name + ".dat");
   dat_file << scientific << setprecision(5);
-  while (dat_file >> entry)
+
+  // Searching for Keyword Position
+  int start_position = FindPosition(dat_file, "%SECTION.BAR.CIRCLE\r");
+
+  // Replacing Radius Values in Input File
+  if (start_position != -1)
   {
-    if (entry == "%SECTION.BAR.CIRCLE")
-    {
-      start_position = dat_file.tellp();
-      break;
-    }
+    dat_file.seekp(start_position + 11);
+    dat_file << r[0];
+    dat_file.seekp(start_position + 32);
+    dat_file << r[1];
+    dat_file.close();
   }
-  dat_file.seekp(start_position + 13);
-  dat_file << r[0];
-  dat_file.seekp(start_position + 34);
-  dat_file << r[1];
-  dat_file.close();
+  else
+  {
+    cout << "Warning: It were not possible to replace Radius Values.\n";
+  }
 
   // Calculating Stresses by Numerical Analysis
   system(("fast " + base_name + " -silent").c_str());
 
   // Reading Results
   fstream pos_file (base_name + ".pos");
-  string trash;
+  string entry, trash;
   while (pos_file >> entry)
   {
     if (entry == "%RESULT.CASE.STEP.ELEMENT.NODAL.SCALAR.DATA")
@@ -1356,17 +1373,27 @@ void c3BarTrussCABAQUS :: Analysis(cVector & A, double * sigma)
   // Files Base Name
   string base_name = "3BarTruss.abaqus";
 
-  // Replacing Area Values in Input File
-  int start_position_1 {590};
-  int start_position_2 {675};
-  string entry;
+  // Opening Input File and Setting Float-point Format
   fstream inp_file (base_name + ".inp");
   inp_file << scientific << setprecision(5);
-  inp_file.seekp(start_position_1);
-  inp_file << A[0];
-  inp_file.seekp(start_position_2);
-  inp_file << A[1];
-  inp_file.close();
+
+  // Searching for Keyword Position
+  int start_position_1 = FindPosition(inp_file, "*Solid Section, elset=A1-A3, material=Metal\r");
+  int start_position_2 = FindPosition(inp_file, "*Solid Section, elset=A2, material=Metal\r");
+
+  // Replacing Area Values in Input File
+  if (start_position_1 != -1 && start_position_2 != -1)
+  {
+    inp_file.seekp(start_position_1);
+    inp_file << A[0];
+    inp_file.seekp(start_position_2);
+    inp_file << A[1];
+    inp_file.close();
+  } 
+  else
+  {
+    cout << "Warning: It were not possible to replace Area Values.\n";
+  }
 
   // Calculating Stresses by Numerical Analysis and Extracting Results
   system(("cmd.exe /c abaqus interactive job=" + base_name + " input=" + base_name + ".inp ask_delete=OFF").c_str());
@@ -1374,7 +1401,7 @@ void c3BarTrussCABAQUS :: Analysis(cVector & A, double * sigma)
 
   // Reading Results
   fstream txt_file (base_name + ".txt");
-  string trash;
+  string entry, trash;
   while (txt_file >> entry)
   {
     if (entry == "STRUCTURE-1")
@@ -1395,16 +1422,27 @@ void c3BarTrussCDIANA :: Analysis(cVector & A, double * sigma)
   // Files Base Name
   string base_name = "3BarTruss.diana";
 
-  // Replacing Area Values in Input File
-  int start_position_1 {680};
-  int start_position_2 {760};
+  // Opening Input File and Setting Float-point Format
   fstream dat_file (base_name + ".dat");
   dat_file << scientific << setprecision(5);
-  dat_file.seekp(start_position_1);
-  dat_file << A[0];
-  dat_file.seekp(start_position_2);
-  dat_file << A[1];
-  dat_file.close();
+
+  // Searching for Keyword Position
+  int start_position = FindPosition(dat_file, "'GEOMET'\r");
+
+  // Replacing Area Values in Input File
+  if (start_position != -1)
+  {
+    dat_file.seekp(start_position + 67);
+    dat_file << A[0];
+    dat_file.seekp(start_position + 147);
+    dat_file << A[1];
+    dat_file.close();
+  }
+  else
+  {
+    cout << "Warning: It were not possible to replace Area Values.\n";
+  }
+  
 
   // Calculating Stresses by Numerical Analysis
   system(("cmd.exe /c diana " + base_name).c_str());

@@ -35,6 +35,8 @@
 #define _BENCHMARK_H
 
 #include <vector>
+#include <string>
+#include <fstream>
 #include "vec.h"
 #include "mat.h"
 #include "matvec.h"
@@ -406,6 +408,7 @@ class c3BarTrussC : public cBenchContinuous
   void         GetApproxConstr(bool * c) { c[0] = 1; c[1] = 1; c[2] = 1; }
 
   protected:
+    int FindPosition(fstream &, string);
     virtual void Analysis(cVector &, double *);
 };
 
