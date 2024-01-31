@@ -397,17 +397,35 @@ class cKit5D : public cBenchDiscrete
 class c3BarTrussC : public cBenchContinuous
 {
   public:
-         c3BarTrussC(void);
-        ~c3BarTrussC(void){}
-  void   Evaluate(cVector & ,cVector &, cVector &);
-  void   EvalExactFobj(cVector&,double &){ };
-  void   EvalExactConstraint(int, cVector&, double &){ };
-  void   GetApproxObj(bool*o) { o[0] = 1; }
-  void   GetApproxConstr(bool*c) { c[0] = 1; c[1] = 1; c[2] = 1; }
+               c3BarTrussC(void);
+              ~c3BarTrussC(void) {};
+  void         Evaluate(cVector &, cVector &, cVector &);
+  void         EvalExactFobj(cVector &, double &) {};
+  void         EvalExactConstraint(int, cVector &, double &) {};
+  void         GetApproxObj(bool * o) { o[0] = 1; }
+  void         GetApproxConstr(bool * c) { c[0] = 1; c[1] = 1; c[2] = 1; }
+
+  protected:
+    virtual void Analysis(cVector &, double *);
+};
+
+class c3BarTrussCFAST : public c3BarTrussC {
+  protected:
+    void Analysis(cVector &, double *);
+};
+
+class c3BarTrussCABAQUS : public c3BarTrussC {
+  protected:
+    void Analysis(cVector &, double *);
+};
+
+class c3BarTrussCDIANA : public c3BarTrussC {
+  protected:
+    void Analysis(cVector &, double *);
 };
 
 //--------------------------------------------------------------------------
-// Definition of 3BarTrussC class:
+// Definition of 3BarTrussD class:
 //
 // Optimization problem Three-Bar Truss. This problem is an engineering
 // optimization problem, which deals with the mass optimization of a three-bar
@@ -422,12 +440,12 @@ class c3BarTrussD : public cBenchDiscrete
 {
   public:
          c3BarTrussD(void);
-        ~c3BarTrussD(void){}
-  void  Evaluate(int* ,cVector &, cVector &);
-  void  EvalExactFobj(int *,double &){ };
-  void  EvalExactConstraint(int, int *, double &){ };
-  void  GetApproxObj(bool*o) { o[0] = 1; }
-  void  GetApproxConstr(bool*c){ c[0] = 1; c[1] = 1; c[2] = 1; }
+        ~c3BarTrussD(void) {};
+  void   Evaluate(int *, cVector &, cVector &);
+  void   EvalExactFobj(int *, double &) {};
+  void   EvalExactConstraint(int, int *, double &) {};
+  void   GetApproxObj(bool * o) { o[0] = 1; }
+  void   GetApproxConstr(bool * c) { c[0] = 1; c[1] = 1; c[2] = 1; }
 };
 
 //--------------------------------------------------------------------------
@@ -619,26 +637,7 @@ class cS3BTruss : public cBenchContinuous
                cS3BTruss(void);
   virtual     ~cS3BTruss(void) {};
   void         Evaluate(cVector &, cVector &, cVector &);
-  void         EvalExactFobj(cVector &, double &) {};
-  void         EvalExactConstraint(int, cVector &, double &) {};
-  void         GetApproxObj(bool * o) { o[0] = 1; }
-  void         GetApproxConstr(bool * c) { c[0] = 1; c[1] = 1; c[2] = 1; }
   virtual void Analysis(cVector &, double *);
-};
-
-class cS3BTrussFAST : public cS3BTruss {
-  public:
-    void Analysis(cVector &, double *);
-};
-
-class cS3BTrussABAQUS : public cS3BTruss {
-  public:
-    void Analysis(cVector &, double *);
-};
-
-class cS3BTrussDIANA : public cS3BTruss {
-  public:
-    void Analysis(cVector &, double *);
 };
 
 #endif

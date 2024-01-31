@@ -86,26 +86,25 @@ static const bool ReadFuncRegister[] =
 //
 static const bool registeredProb[] =
 {
-  cProblemFactory :: Register("Peaks"             , MakeProb<cPeaksC,cPeaksD>),
-  cProblemFactory :: Register("Branin"            , MakeProb<cBraninC,cBraninD>),
-  cProblemFactory :: Register("Hartmann3"         , MakeProb<cHart3C,cHart3D>),
-  cProblemFactory :: Register("Hartmann6"         , MakeProb<cHart6C,cHart6D>),
-  cProblemFactory :: Register("Rastrigin"         , MakeProb<cRastriginC,cRastriginD>),
-  cProblemFactory :: Register("ConstrainedBranin" , MakeProb<cConstrainedBraninC,cConstrainedBraninD>),
-  cProblemFactory :: Register("Kitayama5"         , MakeProb<cKit5C,cKit5D>),
-  cProblemFactory :: Register("ThreeBarTruss"     , MakeProb<c3BarTrussC,c3BarTrussD>),
-  cProblemFactory :: Register("NowackiBeam"       , MakeProb<cNowackiBeamC,cNowackiBeamD>),
-  cProblemFactory :: Register("Beam"              , MakeProb<cBeamC,cBeamD>),
-  cProblemFactory :: Register("CONSTR"            , MakeProb<cCONSTRC>),
-  cProblemFactory :: Register("TNK"               , MakeProb<cTNKC>),
-  cProblemFactory :: Register("ZDT6"              , MakeProb<cZDT6C>),
-  cProblemFactory :: Register("ZDT1"              , MakeProb<cZDT1C>),
-  cProblemFactory :: Register("SCH"               , MakeProb<cSCHC>),
-  cProblemFactory :: Register("KUR"               , MakeProb<cKURC>),
-  cProblemFactory :: Register("S3BTruss"          , MakeProb<cS3BTruss>),
-  cProblemFactory :: Register("S3BTrussFAST"      , MakeProb<cS3BTrussFAST>),
-  cProblemFactory :: Register("S3BTrussABAQUS"    , MakeProb<cS3BTrussABAQUS>),
-  cProblemFactory :: Register("S3BTrussDIANA"     , MakeProb<cS3BTrussDIANA>)
+  cProblemFactory :: Register("Peaks"               , MakeProb<cPeaksC,cPeaksD>),
+  cProblemFactory :: Register("Branin"              , MakeProb<cBraninC,cBraninD>),
+  cProblemFactory :: Register("Hartmann3"           , MakeProb<cHart3C,cHart3D>),
+  cProblemFactory :: Register("Hartmann6"           , MakeProb<cHart6C,cHart6D>),
+  cProblemFactory :: Register("Rastrigin"           , MakeProb<cRastriginC,cRastriginD>),
+  cProblemFactory :: Register("ConstrainedBranin"   , MakeProb<cConstrainedBraninC,cConstrainedBraninD>),
+  cProblemFactory :: Register("Kitayama5"           , MakeProb<cKit5C,cKit5D>),
+  cProblemFactory :: Register("ThreeBarTruss"       , MakeProb<c3BarTrussC,c3BarTrussD>),
+  cProblemFactory :: Register("ThreeBarTrussFAST"   , MakeProb<c3BarTrussCFAST>),
+  cProblemFactory :: Register("ThreeBarTrussABAQUS" , MakeProb<c3BarTrussCABAQUS>),
+  cProblemFactory :: Register("ThreeBarTrussDIANA"  , MakeProb<c3BarTrussCDIANA>),
+  cProblemFactory :: Register("NowackiBeam"         , MakeProb<cNowackiBeamC,cNowackiBeamD>),
+  cProblemFactory :: Register("Beam"                , MakeProb<cBeamC,cBeamD>),
+  cProblemFactory :: Register("CONSTR"              , MakeProb<cCONSTRC>),
+  cProblemFactory :: Register("TNK"                 , MakeProb<cTNKC>),
+  cProblemFactory :: Register("ZDT6"                , MakeProb<cZDT6C>),
+  cProblemFactory :: Register("ZDT1"                , MakeProb<cZDT1C>),
+  cProblemFactory :: Register("SCH"                 , MakeProb<cSCHC>),
+  cProblemFactory :: Register("KUR"                 , MakeProb<cKURC>)
 };
 
 // -------------------------------------------------------------------------
@@ -1252,54 +1251,189 @@ c3BarTrussC :: c3BarTrussC(void)
   Low = new double[NumVar];
   Upp = new double[NumVar];
 
-  Low[0] = 0.1;
-  Upp[0] = 5.0;
-  Low[1] = 0.1;
-  Upp[1] = 5.0;
+  Low[0] = Low[1] = 0.1;
+  Upp[0] = Upp[1] = 5.0;
 }
 
 // ============================ Evaluate ===============================
 
-void c3BarTrussC :: Evaluate(cVector &x, cVector &c, cVector &fobjs)
+void c3BarTrussC :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
 {
-    // Truss parameters
+  // Renaming design variable
+  cVector & A = x;
 
-    double P = 20; // Nodal load
+  // Maximum permissible stresses in compression and tension
+  double sigma_c {-15}; 
+  double sigma_t {20};
 
-    double syc = 15; // Maximum permissible stress in compression
-    double syt = 20;  // Maximum permissible stress in tension
+  // Total weigth of the truss (divided by the constant \rho)
+  double w = 2 * A[0] * sqrt(2) + A[1]; 
 
-    double A1 = x[0]; // Area of truss 1, which is the same as truss 3
-    double A2 = x[1]; // Area of truss 2
+  // Running Analysis
+  double sigma [3];
+  Analysis(A, sigma);
 
-    double w = 2*A1*sqrt(2) + A2; // Total weigth of the truss (divided by the constant \rho)
+  // Constraints evaluation
+  c[0] = sigma[0] / sigma_t - 1;
+  c[1] = sigma[1] / sigma_t - 1;
+  c[2] = sigma[2] / sigma_c - 1;
 
-    double s1 = P*(A2 + sqrt(2)*A1)/(sqrt(2)*A1*A1 + 2*A1*A2);
-    double s2 = P*(1/(A1 + sqrt(2)*A2));
-    double s3 = -P*(A2/(sqrt(2)*A1*A1 + 2*A1*A2));
+  // Objetive function evaluation
+  fobjs[0] = w;
+}
 
-    // Constraints evaluation.
+// ============================ Analysis ===============================
 
-    c[0] = s1/syt - 1;
-    c[1] = s2/syt - 1;
-    c[2] = s3/syc - 1;
+void c3BarTrussC :: Analysis(cVector & A, double * sigma)
+{ 
+  // Load Parameters
+  double P = 20;
+  
+  // Analytical Stresses
+  sigma[0] = P * (A[1] + sqrt(2) * A[0]) / (sqrt(2) * A[0] * A[0] + 2 * A[0] * A[1]);
+  sigma[1] = P * (1 / (A[0] + sqrt(2) * A[1]));
+  sigma[2] = -P * (A[1] / (sqrt(2) * A[0] * A[0] + 2 * A[0] * A[1]));
+}
 
-    // Objetive function evaluation
+// ============================ c3BarTrussCFAST :: Analysis ===============================
 
-    double fobj = w;
+void c3BarTrussCFAST :: Analysis(cVector & A, double * sigma)
+{
+  // Files Base Name
+  string base_name = "3BarTruss.fast";
 
-    fobjs[0] = fobj;
+  // Calculating Radius to Replace
+  double r [2] {
+    sqrt(A[0] / PI),
+    sqrt(A[1] / PI)
+  };
+
+  // Replacing Area Values in Input File
+  int start_position {0};
+  string entry;
+  fstream dat_file (base_name + ".dat");
+  dat_file << scientific << setprecision(5);
+  while (dat_file >> entry)
+  {
+    if (entry == "%SECTION.BAR.CIRCLE")
+    {
+      start_position = dat_file.tellp();
+      break;
+    }
+  }
+  dat_file.seekp(start_position + 13);
+  dat_file << r[0];
+  dat_file.seekp(start_position + 34);
+  dat_file << r[1];
+  dat_file.close();
+
+  // Calculating Stresses by Numerical Analysis
+  system(("fast " + base_name + " -silent").c_str());
+
+  // Reading Results
+  fstream pos_file (base_name + ".pos");
+  string trash;
+  while (pos_file >> entry)
+  {
+    if (entry == "%RESULT.CASE.STEP.ELEMENT.NODAL.SCALAR.DATA")
+    {
+      pos_file >> trash >> trash >> sigma[0];
+      pos_file >> trash >> trash >> sigma[1];
+      pos_file >> trash >> trash >> sigma[2];
+      break;
+    }
+  }
+  pos_file.close();
+  sigma[0] = sigma[0] / A[0];
+  sigma[1] = sigma[1] / A[1];
+  sigma[2] = sigma[2] / A[0];
+}
+
+// ============================ c3BarTrussCABAQUS :: Analysis ===============================
+
+void c3BarTrussCABAQUS :: Analysis(cVector & A, double * sigma)
+{
+  // Files Base Name
+  string base_name = "3BarTruss.abaqus";
+
+  // Replacing Area Values in Input File
+  int start_position_1 {590};
+  int start_position_2 {675};
+  string entry;
+  fstream inp_file (base_name + ".inp");
+  inp_file << scientific << setprecision(5);
+  inp_file.seekp(start_position_1);
+  inp_file << A[0];
+  inp_file.seekp(start_position_2);
+  inp_file << A[1];
+  inp_file.close();
+
+  // Calculating Stresses by Numerical Analysis and Extracting Results
+  system(("cmd.exe /c abaqus interactive job=" + base_name + " input=" + base_name + ".inp ask_delete=OFF").c_str());
+  system(("cmd.exe /c abaqus odbreport odb=" + base_name + ".odb field='S' > " + base_name + ".txt").c_str());
+
+  // Reading Results
+  fstream txt_file (base_name + ".txt");
+  string trash;
+  while (txt_file >> entry)
+  {
+    if (entry == "STRUCTURE-1")
+    {
+      txt_file >> trash >> trash >> sigma[0];
+      txt_file >> trash >> trash >> trash >> trash >> trash >> sigma[1];
+      txt_file >> trash >> trash >> trash >> trash >> trash >> sigma[2];
+      break;
+    }
+  }
+  txt_file.close();
+}
+
+// ============================ c3BarTrussCDIANA :: Analysis ===============================
+
+void c3BarTrussCDIANA :: Analysis(cVector & A, double * sigma)
+{
+  // Files Base Name
+  string base_name = "3BarTruss.diana";
+
+  // Replacing Area Values in Input File
+  int start_position_1 {680};
+  int start_position_2 {760};
+  fstream dat_file (base_name + ".dat");
+  dat_file << scientific << setprecision(5);
+  dat_file.seekp(start_position_1);
+  dat_file << A[0];
+  dat_file.seekp(start_position_2);
+  dat_file << A[1];
+  dat_file.close();
+
+  // Calculating Stresses by Numerical Analysis
+  system(("cmd.exe /c diana " + base_name).c_str());
+
+  // Reading Results
+  fstream tb_file (base_name + ".tb");
+  string entry, trash;
+  while (tb_file >> entry)
+  {
+    if (entry == "Elmnr")
+    {
+      tb_file >> trash >> trash >> trash >> trash >> sigma[0];
+      tb_file >> trash >> trash >> trash >> trash >> sigma[1];
+      tb_file >> trash >> trash >> trash >> trash >> sigma[2];
+      break;
+    }
+  }
+  tb_file.close();
 }
 
 // -------------------------------------------------------------------------
-// Class c3BarTrussC:
+// Class c3BarTrussD:
 // -------------------------------------------------------------------------
 
 // -------------------------------------------------------------------------
 // Public methods:
 //
 
-// ============================ c3BarTrussC ===============================
+// ============================ c3BarTrussD ===============================
 c3BarTrussD :: c3BarTrussD(void)
 {
   NumVar = 2;
@@ -2225,7 +2359,7 @@ void cS3BTruss :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
 
   // Running Analysis
   double sigma [3];
-  this->Analysis(A, sigma);
+  Analysis(A, sigma);
 
   // Constraints Limits
   double sigma_a = 150e6;
@@ -2255,127 +2389,6 @@ void cS3BTruss :: Analysis(cVector & A, double * sigma)
   sigma[0] = 1 / sqrt(2) * (P_u / A[0] + P_v / (A[0] + sqrt(2) * A[1]));
   sigma[1] = sqrt(2) * P_v / (A[0] + sqrt(2) * A[1]);
   sigma[2] = 1 / sqrt(2) * (-P_u / A[0] + P_v / (A[0] + sqrt(2) * A[1]));
-}
-
-// ============================ cS3BTrussFAST :: Analysis ===============================
-
-void cS3BTrussFAST :: Analysis(cVector & A, double * sigma)
-{
-  // Calculating Radius to Replace
-  double r [2] {
-    sqrt(A[0] / PI),
-    sqrt(A[1] / PI)
-  };
-
-  // Replacing Area Values in Input File
-  int start_position {0};
-  string entry;
-  fstream dat_file ("teste.dat");
-  dat_file << scientific << setprecision(5);
-  while (dat_file >> entry)
-  {
-    if (entry == "%SECTION.BAR.CIRCLE")
-    {
-      start_position = dat_file.tellp();
-      break;
-    }
-  }
-  dat_file.seekp(start_position + 13);
-  dat_file << r[0];
-  dat_file.seekp(start_position + 34);
-  dat_file << r[1];
-  dat_file.close();
-
-  // Calculating Stresses by Numerical Analysis
-  system("fast teste -silent");
-
-  // Reading Results
-  fstream pos_file ("teste.pos");
-  string trash;
-  while (pos_file >> entry)
-  {
-    if (entry == "%RESULT.CASE.STEP.ELEMENT.NODAL.SCALAR.DATA")
-    {
-      pos_file >> trash >> trash >> sigma[0];
-      pos_file >> trash >> trash >> sigma[1];
-      pos_file >> trash >> trash >> sigma[2];
-      break;
-    }
-  }
-  pos_file.close();
-  sigma[0] = sigma[0] / A[0];
-  sigma[1] = sigma[1] / A[1];
-  sigma[2] = sigma[2] / A[0];
-}
-
-// ============================ cS3BTrussABAQUS :: Analysis ===============================
-
-void cS3BTrussABAQUS :: Analysis(cVector & A, double * sigma)
-{
-  // Replacing Area Values in Input File
-  int start_position_1 {590};
-  int start_position_2 {675};
-  string entry;
-  fstream inp_file ("teste.inp");
-  inp_file << scientific << setprecision(5);
-  inp_file.seekp(start_position_1);
-  inp_file << A[0];
-  inp_file.seekp(start_position_2);
-  inp_file << A[1];
-  inp_file.close();
-
-  // Calculating Stresses by Numerical Analysis and Extracting Results
-  system("cmd.exe /c abaqus interactive job=teste input=teste.inp ask_delete=OFF");
-  system("cmd.exe /c abaqus odbreport odb=teste.odb field='S' > teste.txt");
-
-  // Reading Results
-  fstream txt_file ("teste.txt");
-  string trash;
-  while (txt_file >> entry)
-  {
-    if (entry == "STRUCTURE-1")
-    {
-      txt_file >> trash >> trash >> sigma[0];
-      txt_file >> trash >> trash >> trash >> trash >> trash >> sigma[1];
-      txt_file >> trash >> trash >> trash >> trash >> trash >> sigma[2];
-      break;
-    }
-  }
-  txt_file.close();
-}
-
-// ============================ cS3BTrussDIANA :: Analysis ===============================
-
-void cS3BTrussDIANA :: Analysis(cVector & A, double * sigma)
-{
-  // Replacing Area Values in Input File
-  int start_position_1 {680};
-  int start_position_2 {760};
-  fstream dat_file ("teste.dat");
-  dat_file << scientific << setprecision(5);
-  dat_file.seekp(start_position_1);
-  dat_file << A[0];
-  dat_file.seekp(start_position_2);
-  dat_file << A[1];
-  dat_file.close();
-
-  // Calculating Stresses by Numerical Analysis
-  system("cmd.exe /c diana teste");
-
-  // Reading Results
-  fstream tb_file ("teste.tb");
-  string entry, trash;
-  while (tb_file >> entry)
-  {
-    if (entry == "Elmnr")
-    {
-      tb_file >> trash >> trash >> trash >> trash >> sigma[0];
-      tb_file >> trash >> trash >> trash >> trash >> sigma[1];
-      tb_file >> trash >> trash >> trash >> trash >> sigma[2];
-      break;
-    }
-  }
-  tb_file.close();
 }
 
 // =========================== End of file =================================

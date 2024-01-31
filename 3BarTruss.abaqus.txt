@@ -1,0 +1,52 @@
+ODB Report: -odb 3BarTruss.abaqus.odb -field S
+
+General ODB information
+  name          : 3BarTruss.abaqus.odb
+  analysisTitle : 
+  description   : DDB object
+  path          : C:/Users/Gabriel Braga/Repositories/BIOS/3BarTruss.abaqus.odb
+
+-------------------------------------------------------------------------------
+Total number of steps = 1
+
+-----------------------------------------------------------
+Step name 'Step-1'
+  description   : 
+  number        : 1
+  domain        : TIME
+  procedure     : *STATIC
+  timePeriod    : 1.0
+  totalTime     : 0.0
+  previousStep  : Initial
+  nlgeom        : No
+
+  Total number of frames = 2
+
+  -------------------------------------
+  Frame number  1
+    description : Increment      1: Step Time =    1.000
+    increment   : 1
+    frame value : 1.0
+    domain      : TIME
+
+    Field name    'S'
+      description : Stress components
+      type        : TENSOR_2D_SURFACE
+      is complex  : No
+      component labels : S11 S22 S12 
+      valid invariants : MISES MAX_INPLANE_PRINCIPAL MIN_INPLANE_PRINCIPAL MAX_PRINCIPAL MIN_PRINCIPAL TRESCA PRESS INV3 
+      has orientations : No
+      Location 0
+        position  : INTEGRATION_POINT
+
+      Components of field 'S'
+      Instance  Element     Node   SP IP      S11           S22           S12     
+      -------- --------- --------- -- -- ------------- ------------- -------------
+   STRUCTURE-1         1               1       5.89088           0.0           0.0
+   STRUCTURE-1         2               1       3.58036           0.0           0.0
+   STRUCTURE-1         3               1      -2.31052           0.0           0.0
+
+
+End of ODB Report.
+BEGIN Abaqus ODB REPORTING
+END Abaqus ODB REPORTING
