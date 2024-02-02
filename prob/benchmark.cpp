@@ -1337,12 +1337,12 @@ void c3BarTrussCFAST :: Analysis(cVector & A, double * sigma)
     dat_file << r[0];
     dat_file.seekp(start_position + 32);
     dat_file << r[1];
-    dat_file.close();
   }
   else
   {
     cout << "Warning: It were not possible to replace Radius Values.\n";
   }
+  dat_file.close();
 
   // Calculating Stresses by Numerical Analysis
   system(("fast " + base_name + " -silent").c_str());
@@ -1388,12 +1388,12 @@ void c3BarTrussCABAQUS :: Analysis(cVector & A, double * sigma)
     inp_file << A[0];
     inp_file.seekp(start_position_2);
     inp_file << A[1];
-    inp_file.close();
   } 
   else
   {
     cout << "Warning: It were not possible to replace Area Values.\n";
   }
+  inp_file.close();
 
   // Calculating Stresses by Numerical Analysis and Extracting Results
   system(("cmd.exe /c abaqus interactive job=" + base_name + " input=" + base_name + ".inp ask_delete=OFF").c_str());
@@ -1436,14 +1436,13 @@ void c3BarTrussCDIANA :: Analysis(cVector & A, double * sigma)
     dat_file << A[0];
     dat_file.seekp(start_position + 147);
     dat_file << A[1];
-    dat_file.close();
   }
   else
   {
     cout << "Warning: It were not possible to replace Area Values.\n";
   }
+  dat_file.close();
   
-
   // Calculating Stresses by Numerical Analysis
   system(("cmd.exe /c diana " + base_name).c_str());
 
@@ -2362,71 +2361,6 @@ void cKURC :: Evaluate(cVector &x, cVector &c, cVector &fobjs)
   }
 
   fobjs[1] = aux3;
-}
-
-// -------------------------------------------------------------------------
-// Class cS3BTruss:
-// -------------------------------------------------------------------------
-
-// -------------------------------------------------------------------------
-// Public methods:
-//
-
-// ============================ cS3BTruss ===============================
-cS3BTruss :: cS3BTruss(void)
-{
-  NumVar = 2;
-  NumConstr = 3;
-  NumObj = 1;
-
-  Low = new double[NumVar];
-  Upp = new double[NumVar];
-
-  Low[0] = Low[1] = 1e-8;
-  Upp[0] = Upp[1] = 10.0;
-}
-
-// ============================ Evaluate ===============================
-
-void cS3BTruss :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
-{
-  // Truss Parameters
-  cVector & A = x;
-  double l = 1;
-  double rho = 7800;
-
-  // Running Analysis
-  double sigma [3];
-  Analysis(A, sigma);
-
-  // Constraints Limits
-  double sigma_a = 150e6;
-
-  // Stresses Constraints
-  if (sigma[2] < 0) sigma[2] *= -1;
-  c[0] = sigma[0] / sigma_a - 1;
-  c[1] = sigma[1] / sigma_a - 1;
-  c[2] = sigma[2] / sigma_a - 1;
-
-  // Objetive Function
-  double mass = l * rho * (2 * sqrt(2) * A[0] + A[1]);
-
-  // Objetive Evaluation
-  fobjs[0] = mass;
-}
-
-void cS3BTruss :: Analysis(cVector & A, double * sigma)
-{
-  // Load Parameters
-  double P = 50e3;
-  double theta = 30 * PI / 180;
-  double P_u = P * cos(theta);
-  double P_v = P * sin(theta);
-
-  // Analytical Stresses
-  sigma[0] = 1 / sqrt(2) * (P_u / A[0] + P_v / (A[0] + sqrt(2) * A[1]));
-  sigma[1] = sqrt(2) * P_v / (A[0] + sqrt(2) * A[1]);
-  sigma[2] = 1 / sqrt(2) * (-P_u / A[0] + P_v / (A[0] + sqrt(2) * A[1]));
 }
 
 // =========================== End of file =================================
