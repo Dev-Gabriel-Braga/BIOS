@@ -1,0 +1,18 @@
+ ThreeBarTrussDIANA                                                                                                          Page 1
+  
+ Analysis type         LINSTA
+ Load case nr.         1     
+ Result                STRESS TOTAL  CAUCHY
+ Axes                  LOCAL 
+ Location of results   NODES 
+  
+ Elmnr Nodnr         Sxx     
+     1     1    2.0041516E+01
+           3    2.0041516E+01
+     2     1    1.4672009E+01
+           2    1.4672009E+01
+     3     1   -5.3695076E+00
+           4   -5.3695076E+00
+  
+  
+  

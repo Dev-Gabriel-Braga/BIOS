@@ -1263,11 +1263,12 @@ void c3BarTrussC :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
   cVector & A = x;
 
   // Maximum permissible stresses in compression and tension
-  double sigma_c {-15}; 
+  double sigma_c {15}; 
   double sigma_t {20};
 
-  // Total weigth of the truss (divided by the constant \rho)
-  double w = 2 * A[0] * sqrt(2) + A[1]; 
+  // Total volume of the truss
+  double H = 1.0;
+  double V = H * (2 * sqrt(2) * A[0] + A[1]);
 
   // Running Analysis
   double sigma [3];
@@ -1276,10 +1277,10 @@ void c3BarTrussC :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
   // Constraints evaluation
   c[0] = sigma[0] / sigma_t - 1;
   c[1] = sigma[1] / sigma_t - 1;
-  c[2] = sigma[2] / sigma_c - 1;
+  c[2] = abs(sigma[2]) / sigma_c - 1;
 
   // Objetive function evaluation
-  fobjs[0] = w;
+  fobjs[0] = V;
 }
 
 // ============================ FindPosition ===============================
@@ -1289,10 +1290,7 @@ int c3BarTrussC :: FindPosition(fstream & stream, string line)
   string entry;
   while (getline(stream, entry))
   {
-    if (entry == line)
-    {
-      return stream.tellp();
-    }
+    if (entry == line) return stream.tellp();
   }
   return -1;
 }
@@ -1315,32 +1313,26 @@ void c3BarTrussC :: Analysis(cVector & A, double * sigma)
 void c3BarTrussCFAST :: Analysis(cVector & A, double * sigma)
 {
   // Files Base Name
-  string base_name = "3BarTruss.fast";
-
-  // Calculating Radius to Replace
-  double r [2] {
-    sqrt(A[0] / PI),
-    sqrt(A[1] / PI)
-  };
+  string base_name = "ThreeBarTrussFAST";
 
   // Opening Input File and Setting Float-point Format
   fstream dat_file (base_name + ".dat");
   dat_file << scientific << setprecision(5);
 
   // Searching for Keyword Position
-  int start_position = FindPosition(dat_file, "%SECTION.BAR.CIRCLE\r");
+  int start_position = FindPosition(dat_file, "%SECTION.BAR.GENERAL\r");
 
-  // Replacing Radius Values in Input File
+  // Replacing Area Values in Input File
   if (start_position != -1)
   {
     dat_file.seekp(start_position + 11);
-    dat_file << r[0];
-    dat_file.seekp(start_position + 32);
-    dat_file << r[1];
+    dat_file << A[0];
+    dat_file.seekp(start_position + 80);
+    dat_file << A[1];
   }
   else
   {
-    cout << "Warning: It were not possible to replace Radius Values.\n";
+    cout << "Warning: It were not possible to replace Area Values.\n";
   }
   dat_file.close();
 
@@ -1348,22 +1340,23 @@ void c3BarTrussCFAST :: Analysis(cVector & A, double * sigma)
   system(("fast " + base_name + " -silent").c_str());
 
   // Reading Results
+  double N [3];
   fstream pos_file (base_name + ".pos");
   string entry, trash;
   while (pos_file >> entry)
   {
     if (entry == "%RESULT.CASE.STEP.ELEMENT.NODAL.SCALAR.DATA")
     {
-      pos_file >> trash >> trash >> sigma[0];
-      pos_file >> trash >> trash >> sigma[1];
-      pos_file >> trash >> trash >> sigma[2];
+      pos_file >> trash >> trash >> N[0];
+      pos_file >> trash >> trash >> N[1];
+      pos_file >> trash >> trash >> N[2];
       break;
     }
   }
   pos_file.close();
-  sigma[0] = sigma[0] / A[0];
-  sigma[1] = sigma[1] / A[1];
-  sigma[2] = sigma[2] / A[0];
+  sigma[0] = N[0] / A[0];
+  sigma[1] = N[1] / A[1];
+  sigma[2] = N[2] / A[0];
 }
 
 // ============================ c3BarTrussCABAQUS :: Analysis ===============================
@@ -1371,7 +1364,7 @@ void c3BarTrussCFAST :: Analysis(cVector & A, double * sigma)
 void c3BarTrussCABAQUS :: Analysis(cVector & A, double * sigma)
 {
   // Files Base Name
-  string base_name = "3BarTruss.abaqus";
+  string base_name = "ThreeBarTrussABAQUS";
 
   // Opening Input File and Setting Float-point Format
   fstream inp_file (base_name + ".inp");
@@ -1396,22 +1389,12 @@ void c3BarTrussCABAQUS :: Analysis(cVector & A, double * sigma)
   inp_file.close();
 
   // Calculating Stresses by Numerical Analysis and Extracting Results
-  system(("cmd.exe /c abaqus interactive job=" + base_name + " input=" + base_name + ".inp ask_delete=OFF").c_str());
-  system(("cmd.exe /c abaqus odbreport odb=" + base_name + ".odb field='S' > " + base_name + ".txt").c_str());
+  system(("cmd.exe /c abaqus cae noGUI=" + base_name + ".py").c_str());
 
   // Reading Results
   fstream txt_file (base_name + ".txt");
-  string entry, trash;
-  while (txt_file >> entry)
-  {
-    if (entry == "STRUCTURE-1")
-    {
-      txt_file >> trash >> trash >> sigma[0];
-      txt_file >> trash >> trash >> trash >> trash >> trash >> sigma[1];
-      txt_file >> trash >> trash >> trash >> trash >> trash >> sigma[2];
-      break;
-    }
-  }
+  string entry;
+  txt_file >> sigma[0] >> sigma[1] >> sigma[2];
   txt_file.close();
 }
 
@@ -1420,7 +1403,7 @@ void c3BarTrussCABAQUS :: Analysis(cVector & A, double * sigma)
 void c3BarTrussCDIANA :: Analysis(cVector & A, double * sigma)
 {
   // Files Base Name
-  string base_name = "3BarTruss.diana";
+  string base_name = "ThreeBarTrussDIANA";
 
   // Opening Input File and Setting Float-point Format
   fstream dat_file (base_name + ".dat");
