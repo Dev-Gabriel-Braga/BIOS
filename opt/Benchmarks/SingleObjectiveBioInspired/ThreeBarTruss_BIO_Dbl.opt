@@ -1,11 +1,26 @@
 %HEADER
 Optimization problem Three-Bar Truss. This problem is an engineering
-optimization problem, which deals with the mass optimization of a three-bar
-truss considering stress related constraints [1]. In this class, the problem
-is solved using discrete variables.
+optimization problem, which deals with the volume optimization of a 
+three-bar truss considering stress constraints [1]. Here, It is solved
+using continuous variables.
 
 [1] Rao, S. S. Engineering Optimization: Theory and Practice. John Wiley &
-    Sons, Inc. 4th Edition.
+    Sons, Inc. 4th Edition. p. 467-468.
+
+Expected Optimum Solution:
+    A1 = 0.78706
+    A2 = 0.40735
+    volume = 2.6335
+
+Expected Constraints on Optimum Solution:
+    c[0] = 0
+    c[1] = -0.2664
+    c[2] = -0.6420
+
+Expected Stresses on Optimum Solution:
+    sigma[0] = 2.00000E+01
+    sigma[1] = 1.46720E+01
+    sigma[2] = -5.36951E+00
 
 ---------------------------OPTIMIZATION.PARAMETERS---------------------------
 

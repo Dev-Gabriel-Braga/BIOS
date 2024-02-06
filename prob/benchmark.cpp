@@ -1393,7 +1393,6 @@ void c3BarTrussCABAQUS :: Analysis(cVector & A, double * sigma)
 
   // Reading Results
   fstream txt_file (base_name + ".txt");
-  string entry;
   txt_file >> sigma[0] >> sigma[1] >> sigma[2];
   txt_file.close();
 }
