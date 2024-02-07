@@ -452,6 +452,47 @@ class c3BarTrussD : public cBenchDiscrete
 };
 
 //--------------------------------------------------------------------------
+// Definition of 10BarTruss class:
+//
+// Optimization problem Ten-Bar Truss. This problem is an engineering
+// optimization problem, which deals with the mass optimization of a ten-bar
+// truss considering displacement and stress related constraints [1]. In this
+// class, the problem is solved using continuous variables.
+//
+// [1] R. Sedaghati. Benchmark case studies in structural design optimization
+//     using the force method. International Journal of Solids and Structures,
+//     Volume 42, Issues 21–22, 2005, Pages 5848-5871, ISSN 0020-7683,
+//     https://doi.org/10.1016/j.ijsolstr.2005.03.030.
+//
+
+class c10BarTruss : public cBenchContinuous
+{
+  public:
+    c10BarTruss(void);
+    ~c10BarTruss(void) {};
+    void Evaluate(cVector &, cVector &, cVector &);
+
+  protected:
+    int FindPosition(fstream &, string);
+    virtual void Analysis(cVector &, double *, double *);
+};
+
+class c10BarTrussFAST : public c10BarTruss {
+  protected:
+    void Analysis(cVector &, double *, double *);
+};
+
+class c10BarTrussABAQUS : public c10BarTruss {
+  protected:
+    void Analysis(cVector &, double *, double *);
+};
+
+class c10BarTrussDIANA : public c10BarTruss {
+  protected:
+    void Analysis(cVector &, double *, double *);
+};
+
+//--------------------------------------------------------------------------
 // Definition of NowackiBeamC class:
 //
 // Optimization problem Nowacki Beam. This problem is an engineering optimization

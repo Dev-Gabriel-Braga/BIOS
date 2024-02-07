@@ -1515,6 +1515,86 @@ void c3BarTrussD :: Evaluate(int *algvar, cVector &c, cVector &fobjs)
 }
 
 // -------------------------------------------------------------------------
+// Class c10BarTruss:
+// -------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------
+// Public methods:
+//
+
+// ============================ c10BarTruss ===============================
+c10BarTruss :: c10BarTruss(void)
+{
+  NumVar = 10;
+  NumConstr = 14;
+  NumObj = 1;
+
+  Low = new double[NumVar];
+  Upp = new double[NumVar];
+
+  for (int i = 0; i < NumVar; i++)
+  {
+    Low[i] = 64.52;
+    Upp[i] = 64520.0;
+  }
+}
+
+// ============================ Evaluate ===============================
+
+void c10BarTruss :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
+{
+  // Renaming design variable
+  cVector & A = x;
+
+  // Maximum displacement and stress
+  double u_a {254.0}; // mm
+  double sigma_a {127.37}; // MPa
+
+  // Total volume of the truss
+  double L {9144}; // mm
+  double rho {2700e-9}; // kg/mm³
+  double mass {0}; // kg
+  for (int i = 0; i < 6; i++)
+  {
+    mass += A[i] * L;
+  }
+  for (int i = 0; i < 4; i++)
+  {
+    mass += A[6 + i] * L * sqrt(2);
+  }
+  mass *= rho;
+
+  // Running Analysis
+  double u [4], sigma [10];
+  Analysis(A, u, sigma);
+
+  // Constraints evaluation
+  for (int i = 0; i < 10; i++)
+  {
+    c[i] = sigma[i] / sigma_a - 1;
+  }
+  for (int i = 0; i < 4; i++)
+  {
+    c[10 + i] = u[i] / u_a - 1;
+  }
+
+  // Objetive function evaluation
+  fobjs[0] = mass;
+}
+
+// ============================ FindPosition ===============================
+
+int c10BarTruss :: FindPosition(fstream & stream, string line)
+{
+  string entry;
+  while (getline(stream, entry))
+  {
+    if (entry == line) return stream.tellp();
+  }
+  return -1;
+}
+
+// -------------------------------------------------------------------------
 // Class cNowackiBeamC:
 // -------------------------------------------------------------------------
 
