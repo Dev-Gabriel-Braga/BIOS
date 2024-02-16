@@ -97,6 +97,7 @@ static const bool registeredProb[] =
   cProblemFactory :: Register("ThreeBarTrussFAST"   , MakeProb<c3BarTrussCFAST>),
   cProblemFactory :: Register("ThreeBarTrussABAQUS" , MakeProb<c3BarTrussCABAQUS>),
   cProblemFactory :: Register("ThreeBarTrussDIANA"  , MakeProb<c3BarTrussCDIANA>),
+  cProblemFactory :: Register("TenBarTrussFAST"     , MakeProb<c10BarTrussFAST>),
   cProblemFactory :: Register("NowackiBeam"         , MakeProb<cNowackiBeamC,cNowackiBeamD>),
   cProblemFactory :: Register("Beam"                , MakeProb<cBeamC,cBeamD>),
   cProblemFactory :: Register("CONSTR"              , MakeProb<cCONSTRC>),
@@ -1547,35 +1548,35 @@ void c10BarTruss :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
   cVector & A = x;
 
   // Maximum displacement and stress
-  double u_a {254.0}; // mm
-  double sigma_a {127.37}; // MPa
+  double v_a {50.8}; // mm
+  double sigma_a {172.37}; // MPa
 
   // Total volume of the truss
   double L {9144}; // mm
   double rho {2700e-9}; // kg/mm³
-  double mass {0}; // kg
+  double volume {0}; // mm³
   for (int i = 0; i < 6; i++)
   {
-    mass += A[i] * L;
+    volume += A[i] * L;
   }
   for (int i = 0; i < 4; i++)
   {
-    mass += A[6 + i] * L * sqrt(2);
+    volume += A[6 + i] * L * sqrt(2);
   }
-  mass *= rho;
+  double mass {rho * volume}; // kg
 
   // Running Analysis
-  double u [4], sigma [10];
-  Analysis(A, u, sigma);
+  double v [4], sigma [10];
+  Analysis(A, v, sigma);
 
   // Constraints evaluation
   for (int i = 0; i < 10; i++)
   {
-    c[i] = sigma[i] / sigma_a - 1;
+    c[i] = abs(sigma[i]) / sigma_a - 1;
   }
   for (int i = 0; i < 4; i++)
   {
-    c[10 + i] = u[i] / u_a - 1;
+    c[10 + i] = abs(v[i]) / v_a - 1;
   }
 
   // Objetive function evaluation
@@ -1592,6 +1593,81 @@ int c10BarTruss :: FindPosition(fstream & stream, string line)
     if (entry == line) return stream.tellp();
   }
   return -1;
+}
+
+// ============================ Analysis ===============================
+
+void c10BarTruss :: Analysis(cVector & A, double * v, double * sigma)
+{}
+
+// ============================ c10BarTrussFAST :: Analysis ===============================
+
+void c10BarTrussFAST :: Analysis(cVector & A, double * v, double * sigma)
+{
+  // Files Base Name
+  string base_name = "TenBarTrussFAST";
+
+  // Opening Input File and Setting Float-point Format
+  fstream dat_file (base_name + ".dat");
+  dat_file << scientific << setprecision(5);
+
+  // Searching for Keyword Position
+  int start_position = FindPosition(dat_file, "%SECTION.BAR.GENERAL\r");
+
+  // Replacing Area Values in Input File
+  int offsets {13};
+  if (start_position != -1)
+  {
+    for (int i = 0; i < NumVar; i++)
+    {
+      dat_file.seekp(start_position + offsets + i * 70);
+      dat_file << A[i];
+    }
+  }
+  else
+  {
+    cout << "Warning: It were not possible to replace Area Values.\n";
+  }
+  dat_file.close();
+
+  // Calculating Stresses by Numerical Analysis
+  system(("fast " + base_name + " -silent").c_str());
+
+  // Opening Output File
+  fstream pos_file (base_name + ".pos");
+  string entry, trash;
+
+  // Reading Displacements
+  while (pos_file >> entry)
+  {
+    if (entry == "%RESULT.CASE.STEP.NODAL.DISPLACEMENT")
+    {
+      pos_file >> trash >> trash >> trash >> trash;
+      for (int i = 0; i < 4; i++)
+      {
+        pos_file >> v[i] >> trash >> trash >> trash >> trash >> trash >> trash;
+      }
+      break;
+    }
+  }
+
+  // Reading Stresses
+  double N [10];
+  while (pos_file >> entry)
+  {
+    if (entry == "%RESULT.CASE.STEP.ELEMENT.NODAL.SCALAR.DATA")
+    {
+      for (int i = 0; i < 10; i++)
+      {
+        pos_file >> trash >> trash >> N[i];
+        sigma[i] = N[i] / A[i];
+      }
+      break;
+    }
+  }
+
+  // Closing Input File
+  pos_file.close();
 }
 
 // -------------------------------------------------------------------------
