@@ -98,6 +98,7 @@ static const bool registeredProb[] =
   cProblemFactory :: Register("ThreeBarTrussABAQUS" , MakeProb<c3BarTrussCABAQUS>),
   cProblemFactory :: Register("ThreeBarTrussDIANA"  , MakeProb<c3BarTrussCDIANA>),
   cProblemFactory :: Register("TenBarTrussFAST"     , MakeProb<c10BarTrussFAST>),
+  cProblemFactory :: Register("TenBarTrussABAQUS"   , MakeProb<c10BarTrussABAQUS>),
   cProblemFactory :: Register("NowackiBeam"         , MakeProb<cNowackiBeamC,cNowackiBeamD>),
   cProblemFactory :: Register("Beam"                , MakeProb<cBeamC,cBeamD>),
   cProblemFactory :: Register("CONSTR"              , MakeProb<cCONSTRC>),
@@ -1553,7 +1554,7 @@ void c10BarTruss :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
 
   // Total volume of the truss
   double L {9144}; // mm
-  double rho {2700e-9}; // kg/mm³
+  double rho {2770e-9}; // kg/mm³
   double volume {0}; // mm³
   for (int i = 0; i < 6; i++)
   {
@@ -1669,6 +1670,174 @@ void c10BarTrussFAST :: Analysis(cVector & A, double * v, double * sigma)
   // Closing Input File
   pos_file.close();
 }
+
+// ============================ c10BarTrussABAQUS :: Analysis ===============================
+
+void c10BarTrussABAQUS :: Analysis(cVector & A, double * v, double * sigma)
+{
+  // Files Base Name
+  string base_name = "TenBarTrussABAQUS";
+
+  // Opening Input File and Setting Float-point Format
+  fstream inp_file (base_name + ".inp");
+  inp_file << scientific << setprecision(5);
+
+  // Searching for Keyword Position
+  double start_position[10];
+  start_position[0] = FindPosition(inp_file, "*Solid Section, elset=A1, material=Material-1\r");
+  start_position[1] = FindPosition(inp_file, "*Solid Section, elset=A2, material=Material-1\r");
+  start_position[2] = FindPosition(inp_file, "*Solid Section, elset=A3, material=Material-1\r");
+  start_position[3] = FindPosition(inp_file, "*Solid Section, elset=A4, material=Material-1\r");
+  start_position[4] = FindPosition(inp_file, "*Solid Section, elset=A5, material=Material-1\r");
+  start_position[5] = FindPosition(inp_file, "*Solid Section, elset=A6, material=Material-1\r");
+  start_position[6] = FindPosition(inp_file, "*Solid Section, elset=A7, material=Material-1\r");
+  start_position[7] = FindPosition(inp_file, "*Solid Section, elset=A8, material=Material-1\r");
+  start_position[8] = FindPosition(inp_file, "*Solid Section, elset=A9, material=Material-1\r");
+  start_position[9] = FindPosition(inp_file, "*Solid Section, elset=A10, material=Material-1\r");
+
+  // Replacing Area Values in Input File
+  for (int i = 0; i < 10; i++){
+  if (start_position[i] != -1)
+  {
+    inp_file.seekp(start_position[i]);
+    inp_file << A[i];
+  } 
+  else
+  {
+    cout << "Warning: It were not possible to replace Area Values.\n";
+  }}
+  inp_file.close();
+
+  // Calculating Stresses by Numerical Analysis and Extracting Results
+  system(("cmd.exe /c abaqus cae noGUI=" + base_name + ".py").c_str());
+
+  // Reading Results
+  fstream txt_file (base_name + ".txt");
+  // Reading Displacements
+  for (int i = 0; i < 4; i++)
+  {
+  txt_file >> v[i];
+  }
+  // Reading Stresses
+  for (int i = 0; i < 10; i++)
+  {
+  txt_file >> sigma[i];
+  }
+  txt_file.close();
+}
+
+// -------------------------------------------------------------------------
+// Class c10BarTrussFrequency:
+// -------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------
+// Public methods:
+//
+
+// ============================ c10BarTrussFrequency ===============================
+c10BarTrussFrequency :: c10BarTrussFrequency(void)
+{
+  NumConstr = 3;
+}
+
+// ============================ Evaluate ===============================
+
+void c10BarTrussFrequency :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
+{
+  // Renaming design variable
+  cVector & A = x;
+
+  // Maximum frequencies
+  double omega_a [3] {7, 15, 20}; // Hz
+
+  // Total volume of the truss
+  double L {9144}; // mm
+  double rho {2770e-9}; // kg/mm³
+  double volume {0}; // mm³
+  for (int i = 0; i < 6; i++)
+  {
+    volume += A[i] * L;
+  }
+  for (int i = 0; i < 4; i++)
+  {
+    volume += A[6 + i] * L * sqrt(2);
+  }
+  double mass {rho * volume}; // kg
+
+  // Running Analysis
+  double omega [3];
+  Analysis(A, omega);
+
+  // Constraints evaluation
+  for (int i = 0; i < 3; i++)
+  {
+    c[i] = omega[i] / omega_a[i] - 1;
+  }
+
+  // Objetive function evaluation
+  fobjs[0] = mass;
+}
+
+// ============================ c10BarTrussFrequencyFAST :: Analysis ===============================
+
+void c10BarTrussFrequencyFAST :: Analysis(cVector & A, double * omega)
+{
+  // Files Base Name
+  string base_name = "TenBarTrussFrequencyFAST";
+
+  // Opening Input File and Setting Float-point Format
+  fstream dat_file (base_name + ".dat");
+  dat_file << scientific << setprecision(5);
+
+  // Searching for Keyword Position
+  int start_position = FindPosition(dat_file, "%SECTION.BAR.GENERAL\r");
+
+  // Replacing Area Values in Input File
+  int offsets {13};
+  if (start_position != -1)
+  {
+    for (int i = 0; i < NumVar; i++)
+    {
+      dat_file.seekp(start_position + offsets + i * 70);
+      dat_file << A[i];
+    }
+  }
+  else
+  {
+    cout << "Warning: It were not possible to replace Area Values.\n";
+  }
+  dat_file.close();
+
+  // Calculating Stresses by Numerical Analysis
+  system(("fast " + base_name + " -silent").c_str());
+
+  // Opening Output File
+  fstream pos_file (base_name + ".pos");
+  string entry, trash;
+
+  // Reading Frequencies
+  bool stop {false};
+  while (pos_file >> entry && !stop)
+  {
+    switch (entry)
+    {
+    case "%RESULT.CASE.STEP.NATURAL.FREQUENCY\n1":
+      pos_file >> omega[0];
+      break;
+    case "%RESULT.CASE.STEP.NATURAL.FREQUENCY\n2":
+      pos_file >> omega[1];
+      break;
+    case "%RESULT.CASE.STEP.NATURAL.FREQUENCY\n3":
+      pos_file >> omega[2];
+      stop = true;
+      break;
+    }
+  }
+
+  // Closing Input File
+  pos_file.close();
+}
+
 
 // -------------------------------------------------------------------------
 // Class cNowackiBeamC:

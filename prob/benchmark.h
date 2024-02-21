@@ -470,7 +470,7 @@ class c10BarTruss : public cBenchContinuous
   public:
     c10BarTruss(void);
     ~c10BarTruss(void) {};
-    void Evaluate(cVector &, cVector &, cVector &);
+    virtual void Evaluate(cVector &, cVector &, cVector &);
 
   protected:
     int FindPosition(fstream &, string);
@@ -490,6 +490,46 @@ class c10BarTrussABAQUS : public c10BarTruss {
 class c10BarTrussDIANA : public c10BarTruss {
   protected:
     void Analysis(cVector &, double *, double *);
+};
+
+//--------------------------------------------------------------------------
+// Definition of 10BarTrussFrequency class:
+//
+// Optimization problem Ten-Bar Truss. This problem is an engineering
+// optimization problem, which deals with the mass optimization of a ten-bar
+// truss considering frequency constraints [1]. In this class, the problem
+// is solved using continuous variables.
+//
+// [1] R. Sedaghati. Benchmark case studies in structural design optimization
+//     using the force method. International Journal of Solids and Structures,
+//     Volume 42, Issues 21–22, 2005, Pages 5848-5871, ISSN 0020-7683,
+//     https://doi.org/10.1016/j.ijsolstr.2005.03.030.
+//
+
+class c10BarTrussFrequency : public c10BarTruss
+{
+  public:
+    c10BarTrussFrequency(void);
+    ~c10BarTrussFrequency(void) {};
+    void Evaluate(cVector &, cVector &, cVector &);
+
+  protected:
+    virtual void Analysis(cVector &, double *);
+};
+
+class c10BarTrussFrequencyFAST : public c10BarTrussFrequency {
+  protected:
+    void Analysis(cVector &, double *);
+};
+
+class c10BarTrussFrequencyABAQUS : public c10BarTrussFrequency {
+  protected:
+    void Analysis(cVector &, double *);
+};
+
+class c10BarTrussFrequencyDIANA : public c10BarTrussFrequency {
+  protected:
+    void Analysis(cVector &, double *);
 };
 
 //--------------------------------------------------------------------------
