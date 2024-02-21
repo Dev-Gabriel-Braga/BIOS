@@ -86,27 +86,28 @@ static const bool ReadFuncRegister[] =
 //
 static const bool registeredProb[] =
 {
-  cProblemFactory :: Register("Peaks"               , MakeProb<cPeaksC,cPeaksD>),
-  cProblemFactory :: Register("Branin"              , MakeProb<cBraninC,cBraninD>),
-  cProblemFactory :: Register("Hartmann3"           , MakeProb<cHart3C,cHart3D>),
-  cProblemFactory :: Register("Hartmann6"           , MakeProb<cHart6C,cHart6D>),
-  cProblemFactory :: Register("Rastrigin"           , MakeProb<cRastriginC,cRastriginD>),
-  cProblemFactory :: Register("ConstrainedBranin"   , MakeProb<cConstrainedBraninC,cConstrainedBraninD>),
-  cProblemFactory :: Register("Kitayama5"           , MakeProb<cKit5C,cKit5D>),
-  cProblemFactory :: Register("ThreeBarTruss"       , MakeProb<c3BarTrussC,c3BarTrussD>),
-  cProblemFactory :: Register("ThreeBarTrussFAST"   , MakeProb<c3BarTrussCFAST>),
-  cProblemFactory :: Register("ThreeBarTrussABAQUS" , MakeProb<c3BarTrussCABAQUS>),
-  cProblemFactory :: Register("ThreeBarTrussDIANA"  , MakeProb<c3BarTrussCDIANA>),
-  cProblemFactory :: Register("TenBarTrussFAST"     , MakeProb<c10BarTrussFAST>),
-  cProblemFactory :: Register("TenBarTrussABAQUS"   , MakeProb<c10BarTrussABAQUS>),
-  cProblemFactory :: Register("NowackiBeam"         , MakeProb<cNowackiBeamC,cNowackiBeamD>),
-  cProblemFactory :: Register("Beam"                , MakeProb<cBeamC,cBeamD>),
-  cProblemFactory :: Register("CONSTR"              , MakeProb<cCONSTRC>),
-  cProblemFactory :: Register("TNK"                 , MakeProb<cTNKC>),
-  cProblemFactory :: Register("ZDT6"                , MakeProb<cZDT6C>),
-  cProblemFactory :: Register("ZDT1"                , MakeProb<cZDT1C>),
-  cProblemFactory :: Register("SCH"                 , MakeProb<cSCHC>),
-  cProblemFactory :: Register("KUR"                 , MakeProb<cKURC>)
+  cProblemFactory :: Register("Peaks"                   , MakeProb<cPeaksC,cPeaksD>),
+  cProblemFactory :: Register("Branin"                  , MakeProb<cBraninC,cBraninD>),
+  cProblemFactory :: Register("Hartmann3"               , MakeProb<cHart3C,cHart3D>),
+  cProblemFactory :: Register("Hartmann6"               , MakeProb<cHart6C,cHart6D>),
+  cProblemFactory :: Register("Rastrigin"               , MakeProb<cRastriginC,cRastriginD>),
+  cProblemFactory :: Register("ConstrainedBranin"       , MakeProb<cConstrainedBraninC,cConstrainedBraninD>),
+  cProblemFactory :: Register("Kitayama5"               , MakeProb<cKit5C,cKit5D>),
+  cProblemFactory :: Register("ThreeBarTruss"           , MakeProb<c3BarTrussC,c3BarTrussD>),
+  cProblemFactory :: Register("ThreeBarTrussFAST"       , MakeProb<c3BarTrussCFAST>),
+  cProblemFactory :: Register("ThreeBarTrussABAQUS"     , MakeProb<c3BarTrussCABAQUS>),
+  cProblemFactory :: Register("ThreeBarTrussDIANA"      , MakeProb<c3BarTrussCDIANA>),
+  cProblemFactory :: Register("TenBarTrussFAST"         , MakeProb<c10BarTrussFAST>),
+  cProblemFactory :: Register("TenBarTrussABAQUS"       , MakeProb<c10BarTrussABAQUS>),
+  cProblemFactory :: Register("TenBarTrussFrequencyFAST", MakeProb<c10BarTrussFrequencyFAST>),
+  cProblemFactory :: Register("NowackiBeam"             , MakeProb<cNowackiBeamC,cNowackiBeamD>),
+  cProblemFactory :: Register("Beam"                    , MakeProb<cBeamC,cBeamD>),
+  cProblemFactory :: Register("CONSTR"                  , MakeProb<cCONSTRC>),
+  cProblemFactory :: Register("TNK"                     , MakeProb<cTNKC>),
+  cProblemFactory :: Register("ZDT6"                    , MakeProb<cZDT6C>),
+  cProblemFactory :: Register("ZDT1"                    , MakeProb<cZDT1C>),
+  cProblemFactory :: Register("SCH"                     , MakeProb<cSCHC>),
+  cProblemFactory :: Register("KUR"                     , MakeProb<cKURC>)
 };
 
 // -------------------------------------------------------------------------
@@ -1737,7 +1738,7 @@ void c10BarTrussABAQUS :: Analysis(cVector & A, double * v, double * sigma)
 // ============================ c10BarTrussFrequency ===============================
 c10BarTrussFrequency :: c10BarTrussFrequency(void)
 {
-  NumConstr = 3;
+  NumConstr = 1;
 }
 
 // ============================ Evaluate ===============================
@@ -1745,10 +1746,10 @@ c10BarTrussFrequency :: c10BarTrussFrequency(void)
 void c10BarTrussFrequency :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
 {
   // Renaming design variable
-  cVector & A = x;
+  cVector & A = x;  
 
   // Maximum frequencies
-  double omega_a [3] {7, 15, 20}; // Hz
+  double omega_a [1] {14}; // Hz
 
   // Total volume of the truss
   double L {9144}; // mm
@@ -1765,18 +1766,21 @@ void c10BarTrussFrequency :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
   double mass {rho * volume}; // kg
 
   // Running Analysis
-  double omega [3];
+  double omega [1];
   Analysis(A, omega);
 
   // Constraints evaluation
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < 1; i++)
   {
-    c[i] = omega[i] / omega_a[i] - 1;
+    c[i] = omega_a[i] / omega[i] - 1;
   }
 
   // Objetive function evaluation
   fobjs[0] = mass;
 }
+
+void c10BarTrussFrequency :: Analysis(cVector & A, double * omega)
+{}
 
 // ============================ c10BarTrussFrequencyFAST :: Analysis ===============================
 
@@ -1816,23 +1820,17 @@ void c10BarTrussFrequencyFAST :: Analysis(cVector & A, double * omega)
   string entry, trash;
 
   // Reading Frequencies
-  bool stop {false};
-  while (pos_file >> entry && !stop)
+  while (pos_file >> entry)
   {
-    switch (entry)
+    if (entry == "%RESULT.CASE.STEP.NATURAL.FREQUENCY")
     {
-    case "%RESULT.CASE.STEP.NATURAL.FREQUENCY\n1":
-      pos_file >> omega[0];
-      break;
-    case "%RESULT.CASE.STEP.NATURAL.FREQUENCY\n2":
-      pos_file >> omega[1];
-      break;
-    case "%RESULT.CASE.STEP.NATURAL.FREQUENCY\n3":
-      pos_file >> omega[2];
-      stop = true;
+      pos_file >> trash >> omega[0];
       break;
     }
   }
+
+  // Converting Natural Frenquency
+  omega[0] *= 2 * PI;
 
   // Closing Input File
   pos_file.close();

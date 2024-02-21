@@ -8,10 +8,10 @@
 1
  
 %MAXIMUM.GENERATIONS
-100
+200
 
 %POPULATION.SIZE
-6
+30
  
 %MIGRATION.GENERATION.GAP
 10
@@ -41,7 +41,7 @@
 'IntegerVector'
 
 %PROBLEM.TYPE
-'TenBarTrussFAST'
+'TenBarTrussFrequencyFAST'
 
 -----------------------------PENALTY.PARAMETERS-----------------------------
  
