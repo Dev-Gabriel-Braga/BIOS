@@ -1537,8 +1537,8 @@ c10BarTruss :: c10BarTruss(void)
 
   for (int i = 0; i < NumVar; i++)
   {
-    Low[i] = 64.52;
-    Upp[i] = 64520.0;
+    Low[i] = 64.52e-6;
+    Upp[i] = 1.0e-1;
   }
 }
 
@@ -1550,13 +1550,13 @@ void c10BarTruss :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
   cVector & A = x;
 
   // Maximum displacement and stress
-  double v_a {50.8}; // mm
-  double sigma_a {172.37}; // MPa
+  double v_a {50.8e-3}; // m
+  double sigma_a {172.37e6}; // Pa
 
   // Total volume of the truss
-  double L {9144}; // mm
-  double rho {2770e-9}; // kg/mm³
-  double volume {0}; // mm³
+  double L {9.144}; // m
+  double rho {2770}; // kg/m³
+  double volume {0}; // m³
   for (int i = 0; i < 6; i++)
   {
     volume += A[i] * L;
@@ -1752,9 +1752,9 @@ void c10BarTrussFrequency :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
   double omega_a [1] {14}; // Hz
 
   // Total volume of the truss
-  double L {9144}; // mm
-  double rho {2770e-9}; // kg/mm³
-  double volume {0}; // mm³
+  double L {9.144}; // m
+  double rho {2770}; // kg/m³
+  double volume {0}; // m³
   for (int i = 0; i < 6; i++)
   {
     volume += A[i] * L;
@@ -1830,7 +1830,7 @@ void c10BarTrussFrequencyFAST :: Analysis(cVector & A, double * omega)
   }
 
   // Converting Natural Frenquency
-  omega[0] *= 2 * PI;
+   omega[0] /= 2 * PI;
 
   // Closing Input File
   pos_file.close();
