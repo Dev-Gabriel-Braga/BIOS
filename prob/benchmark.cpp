@@ -1597,6 +1597,33 @@ int c10BarTruss :: FindPosition(fstream & stream, string line)
   return -1;
 }
 
+// ============================ FindPosition ===============================
+
+void c10BarTruss :: ReplaceAreas(cVector & A, string base_name, int offset, int jump)
+{
+  fstream dat_file (base_name + ".dat");
+  dat_file << scientific << setprecision(5);
+
+  // Searching for Keyword Position
+  int start_position = FindPosition(dat_file, "%SECTION.BAR.GENERAL\r");
+
+  // Replacing Area Values in Input File
+  if (start_position != -1)
+  {
+    for (int i = 0; i < NumVar; i++)
+    {
+      dat_file.seekp(start_position + offset + i * jump);
+      dat_file << A[i];
+    }
+  }
+  else
+  {
+    cout << "Warning: It were not possible to replace Area Values.\n";
+  }
+  dat_file.close();
+}
+
+
 // ============================ Analysis ===============================
 
 void c10BarTruss :: Analysis(cVector & A, double * v, double * sigma)
@@ -1609,28 +1636,8 @@ void c10BarTrussFAST :: Analysis(cVector & A, double * v, double * sigma)
   // Files Base Name
   string base_name = "TenBarTrussFAST";
 
-  // Opening Input File and Setting Float-point Format
-  fstream dat_file (base_name + ".dat");
-  dat_file << scientific << setprecision(5);
-
-  // Searching for Keyword Position
-  int start_position = FindPosition(dat_file, "%SECTION.BAR.GENERAL\r");
-
   // Replacing Area Values in Input File
-  int offsets {13};
-  if (start_position != -1)
-  {
-    for (int i = 0; i < NumVar; i++)
-    {
-      dat_file.seekp(start_position + offsets + i * 70);
-      dat_file << A[i];
-    }
-  }
-  else
-  {
-    cout << "Warning: It were not possible to replace Area Values.\n";
-  }
-  dat_file.close();
+  ReplaceAreas(A, base_name, 13, 70);
 
   // Calculating Stresses by Numerical Analysis
   system(("fast " + base_name + " -silent").c_str());
@@ -1725,6 +1732,35 @@ void c10BarTrussABAQUS :: Analysis(cVector & A, double * v, double * sigma)
   txt_file >> sigma[i];
   }
   txt_file.close();
+}
+
+// ============================ c10BarTrussDIANA :: Analysis ===============================
+
+void c10BarTrussDIANA :: Analysis(cVector & A, double * v, double * sigma)
+{
+  // Files Base Name
+  string base_name = "TenBarTrussDIANA";
+
+  // Replacing Area Values in Input File
+  ReplaceAreas(A, base_name, 67, 80);
+  
+  // Calculating Stresses by Numerical Analysis
+  system(("cmd.exe /c diana " + base_name).c_str());
+
+  // Reading Results
+  fstream tb_file (base_name + ".tb");
+  string entry, trash;
+  while (tb_file >> entry)
+  {
+    if (entry == "Elmnr")
+    {
+      tb_file >> trash >> trash >> trash >> trash >> sigma[0];
+      tb_file >> trash >> trash >> trash >> trash >> sigma[1];
+      tb_file >> trash >> trash >> trash >> trash >> sigma[2];
+      break;
+    }
+  }
+  tb_file.close();
 }
 
 // -------------------------------------------------------------------------

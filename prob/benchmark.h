@@ -474,6 +474,7 @@ class c10BarTruss : public cBenchContinuous
 
   protected:
     int FindPosition(fstream &, string);
+    void ReplaceAreas(cVector &, string, int, int);
     virtual void Analysis(cVector &, double *, double *);
 };
 
