@@ -1599,13 +1599,13 @@ int c10BarTruss :: FindPosition(fstream & stream, string line)
 
 // ============================ FindPosition ===============================
 
-void c10BarTruss :: ReplaceAreas(cVector & A, string base_name, int offset, int jump)
+void c10BarTruss :: ReplaceAreas(cVector & A, string keyword, string base_name, int offset, int jump)
 {
   fstream dat_file (base_name + ".dat");
   dat_file << scientific << setprecision(5);
 
   // Searching for Keyword Position
-  int start_position = FindPosition(dat_file, "%SECTION.BAR.GENERAL\r");
+  int start_position = FindPosition(dat_file, keyword);
 
   // Replacing Area Values in Input File
   if (start_position != -1)
@@ -1637,7 +1637,8 @@ void c10BarTrussFAST :: Analysis(cVector & A, double * v, double * sigma)
   string base_name = "TenBarTrussFAST";
 
   // Replacing Area Values in Input File
-  ReplaceAreas(A, base_name, 13, 70);
+  string keyword {"%SECTION.BAR.GENERAL\r"};
+  ReplaceAreas(A, keyword, base_name, 13, 70);
 
   // Calculating Stresses by Numerical Analysis
   system(("fast " + base_name + " -silent").c_str());
@@ -1742,24 +1743,41 @@ void c10BarTrussDIANA :: Analysis(cVector & A, double * v, double * sigma)
   string base_name = "TenBarTrussDIANA";
 
   // Replacing Area Values in Input File
-  ReplaceAreas(A, base_name, 67, 80);
+  string keyword {"'GEOMET'\r"};
+  ReplaceAreas(A, keyword, base_name, 67, 80);
   
   // Calculating Stresses by Numerical Analysis
   system(("cmd.exe /c diana " + base_name).c_str());
 
-  // Reading Results
+  // Reading Displacements
   fstream tb_file (base_name + ".tb");
   string entry, trash;
   while (tb_file >> entry)
   {
-    if (entry == "Elmnr")
+    if (entry == "Nodnr")
     {
-      tb_file >> trash >> trash >> trash >> trash >> sigma[0];
-      tb_file >> trash >> trash >> trash >> trash >> sigma[1];
-      tb_file >> trash >> trash >> trash >> trash >> sigma[2];
+      tb_file >> trash >> trash >> trash >> trash >> trash;
+      for (int i = 0; i < 4; i++)
+      {
+        tb_file >> v[i] >> trash >> trash >> trash;
+      }
       break;
     }
   }
+
+  // Reading Stresses
+  while (tb_file >> entry)
+  {
+    if (entry == "Elmnr")
+    {
+      for (int i = 0; i < 10; i++)
+      {
+        tb_file >> trash >> trash >> trash >> trash >> sigma[i];
+      }
+      break;
+    }
+  }
+
   tb_file.close();
 }
 
@@ -1825,28 +1843,9 @@ void c10BarTrussFrequencyFAST :: Analysis(cVector & A, double * omega)
   // Files Base Name
   string base_name = "TenBarTrussFrequencyFAST";
 
-  // Opening Input File and Setting Float-point Format
-  fstream dat_file (base_name + ".dat");
-  dat_file << scientific << setprecision(5);
-
-  // Searching for Keyword Position
-  int start_position = FindPosition(dat_file, "%SECTION.BAR.GENERAL\r");
-
   // Replacing Area Values in Input File
-  int offsets {13};
-  if (start_position != -1)
-  {
-    for (int i = 0; i < NumVar; i++)
-    {
-      dat_file.seekp(start_position + offsets + i * 70);
-      dat_file << A[i];
-    }
-  }
-  else
-  {
-    cout << "Warning: It were not possible to replace Area Values.\n";
-  }
-  dat_file.close();
+  string keyword {"%SECTION.BAR.GENERAL\r"};
+  ReplaceAreas(A, keyword, base_name, 13, 70);
 
   // Calculating Stresses by Numerical Analysis
   system(("fast " + base_name + " -silent").c_str());
@@ -1872,6 +1871,33 @@ void c10BarTrussFrequencyFAST :: Analysis(cVector & A, double * omega)
   pos_file.close();
 }
 
+void c10BarTrussFrequencyDIANA :: Analysis(cVector & A, double * omega)
+{
+  // Files Base Name
+  string base_name = "TenBarTrussFrequencyDIANA";
+
+  // Replacing Area Values in Input File
+  string keyword {"'GEOMET'\r"};
+  ReplaceAreas(A, keyword, base_name, 67, 80);
+
+  // Calculating Stresses by Numerical Analysis
+  system(("cmd.exe /c diana " + base_name).c_str());
+
+  // Reading Frequencies
+  fstream tb_file (base_name + ".tb");
+  string entry, trash;
+  while (tb_file >> entry)
+  {
+    if (entry == "frequency")
+    {
+      tb_file >> omega[0];
+      break;
+    }
+  }
+
+  // Closing Input File
+  tb_file.close();
+}
 
 // -------------------------------------------------------------------------
 // Class cNowackiBeamC:
