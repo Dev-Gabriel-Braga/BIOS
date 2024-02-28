@@ -86,28 +86,30 @@ static const bool ReadFuncRegister[] =
 //
 static const bool registeredProb[] =
 {
-  cProblemFactory :: Register("Peaks"                   , MakeProb<cPeaksC,cPeaksD>),
-  cProblemFactory :: Register("Branin"                  , MakeProb<cBraninC,cBraninD>),
-  cProblemFactory :: Register("Hartmann3"               , MakeProb<cHart3C,cHart3D>),
-  cProblemFactory :: Register("Hartmann6"               , MakeProb<cHart6C,cHart6D>),
-  cProblemFactory :: Register("Rastrigin"               , MakeProb<cRastriginC,cRastriginD>),
-  cProblemFactory :: Register("ConstrainedBranin"       , MakeProb<cConstrainedBraninC,cConstrainedBraninD>),
-  cProblemFactory :: Register("Kitayama5"               , MakeProb<cKit5C,cKit5D>),
-  cProblemFactory :: Register("ThreeBarTruss"           , MakeProb<c3BarTrussC,c3BarTrussD>),
-  cProblemFactory :: Register("ThreeBarTrussFAST"       , MakeProb<c3BarTrussCFAST>),
-  cProblemFactory :: Register("ThreeBarTrussABAQUS"     , MakeProb<c3BarTrussCABAQUS>),
-  cProblemFactory :: Register("ThreeBarTrussDIANA"      , MakeProb<c3BarTrussCDIANA>),
-  cProblemFactory :: Register("TenBarTrussFAST"         , MakeProb<c10BarTrussFAST>),
-  cProblemFactory :: Register("TenBarTrussABAQUS"       , MakeProb<c10BarTrussABAQUS>),
-  cProblemFactory :: Register("TenBarTrussFrequencyFAST", MakeProb<c10BarTrussFrequencyFAST>),
-  cProblemFactory :: Register("NowackiBeam"             , MakeProb<cNowackiBeamC,cNowackiBeamD>),
-  cProblemFactory :: Register("Beam"                    , MakeProb<cBeamC,cBeamD>),
-  cProblemFactory :: Register("CONSTR"                  , MakeProb<cCONSTRC>),
-  cProblemFactory :: Register("TNK"                     , MakeProb<cTNKC>),
-  cProblemFactory :: Register("ZDT6"                    , MakeProb<cZDT6C>),
-  cProblemFactory :: Register("ZDT1"                    , MakeProb<cZDT1C>),
-  cProblemFactory :: Register("SCH"                     , MakeProb<cSCHC>),
-  cProblemFactory :: Register("KUR"                     , MakeProb<cKURC>)
+  cProblemFactory :: Register("Peaks"                    , MakeProb<cPeaksC,cPeaksD>),
+  cProblemFactory :: Register("Branin"                   , MakeProb<cBraninC,cBraninD>),
+  cProblemFactory :: Register("Hartmann3"                , MakeProb<cHart3C,cHart3D>),
+  cProblemFactory :: Register("Hartmann6"                , MakeProb<cHart6C,cHart6D>),
+  cProblemFactory :: Register("Rastrigin"                , MakeProb<cRastriginC,cRastriginD>),
+  cProblemFactory :: Register("ConstrainedBranin"        , MakeProb<cConstrainedBraninC,cConstrainedBraninD>),
+  cProblemFactory :: Register("Kitayama5"                , MakeProb<cKit5C,cKit5D>),
+  cProblemFactory :: Register("ThreeBarTruss"            , MakeProb<c3BarTrussC,c3BarTrussD>),
+  cProblemFactory :: Register("ThreeBarTrussFAST"        , MakeProb<c3BarTrussCFAST>),
+  cProblemFactory :: Register("ThreeBarTrussABAQUS"      , MakeProb<c3BarTrussCABAQUS>),
+  cProblemFactory :: Register("ThreeBarTrussDIANA"       , MakeProb<c3BarTrussCDIANA>),
+  cProblemFactory :: Register("TenBarTrussFAST"          , MakeProb<c10BarTrussFAST>),
+  cProblemFactory :: Register("TenBarTrussABAQUS"        , MakeProb<c10BarTrussABAQUS>),
+  cProblemFactory :: Register("TenBarTrussDIANA"         , MakeProb<c10BarTrussDIANA>),
+  cProblemFactory :: Register("TenBarTrussFrequencyFAST" , MakeProb<c10BarTrussFrequencyFAST>),
+  cProblemFactory :: Register("TenBarTrussFrequencyDIANA", MakeProb<c10BarTrussFrequencyDIANA>),
+  cProblemFactory :: Register("NowackiBeam"              , MakeProb<cNowackiBeamC,cNowackiBeamD>),
+  cProblemFactory :: Register("Beam"                     , MakeProb<cBeamC,cBeamD>),
+  cProblemFactory :: Register("CONSTR"                   , MakeProb<cCONSTRC>),
+  cProblemFactory :: Register("TNK"                      , MakeProb<cTNKC>),
+  cProblemFactory :: Register("ZDT6"                     , MakeProb<cZDT6C>),
+  cProblemFactory :: Register("ZDT1"                     , MakeProb<cZDT1C>),
+  cProblemFactory :: Register("SCH"                      , MakeProb<cSCHC>),
+  cProblemFactory :: Register("KUR"                      , MakeProb<cKURC>)
 };
 
 // -------------------------------------------------------------------------
@@ -1599,28 +1601,31 @@ int c10BarTruss :: FindPosition(fstream & stream, string line)
 
 // ============================ FindPosition ===============================
 
-void c10BarTruss :: ReplaceAreas(cVector & A, string keyword, string base_name, int offset, int jump)
+void c10BarTruss :: ReplaceAreas(cVector & A, string keyword, string file_name, int * offsets)
 {
-  fstream dat_file (base_name + ".dat");
-  dat_file << scientific << setprecision(5);
+  // Opening Input File
+  fstream input_file (file_name);
+  input_file << scientific << setprecision(5);
 
   // Searching for Keyword Position
-  int start_position = FindPosition(dat_file, keyword);
+  int start_position = FindPosition(input_file, keyword);
 
   // Replacing Area Values in Input File
+  int offset {0};
   if (start_position != -1)
   {
     for (int i = 0; i < NumVar; i++)
     {
-      dat_file.seekp(start_position + offset + i * jump);
-      dat_file << A[i];
+      offset += offsets[i];
+      input_file.seekp(start_position + offset);
+      input_file << A[i];
     }
   }
   else
   {
     cout << "Warning: It were not possible to replace Area Values.\n";
   }
-  dat_file.close();
+  input_file.close();
 }
 
 
@@ -1638,7 +1643,8 @@ void c10BarTrussFAST :: Analysis(cVector & A, double * v, double * sigma)
 
   // Replacing Area Values in Input File
   string keyword {"%SECTION.BAR.GENERAL\r"};
-  ReplaceAreas(A, keyword, base_name, 13, 70);
+  int offsets [] {13, 70, 70, 70, 70, 70, 70, 70, 70, 70};
+  ReplaceAreas(A, keyword, base_name + ".dat", offsets);
 
   // Calculating Stresses by Numerical Analysis
   system(("fast " + base_name + " -silent").c_str());
@@ -1744,7 +1750,8 @@ void c10BarTrussDIANA :: Analysis(cVector & A, double * v, double * sigma)
 
   // Replacing Area Values in Input File
   string keyword {"'GEOMET'\r"};
-  ReplaceAreas(A, keyword, base_name, 67, 80);
+  int offsets [] {67, 80, 80, 80, 80, 80, 80, 80, 80, 81};
+  ReplaceAreas(A, keyword, base_name + ".dat", offsets);
   
   // Calculating Stresses by Numerical Analysis
   system(("cmd.exe /c diana " + base_name).c_str());
@@ -1800,7 +1807,7 @@ c10BarTrussFrequency :: c10BarTrussFrequency(void)
 void c10BarTrussFrequency :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
 {
   // Renaming design variable
-  cVector & A = x;  
+  cVector & A = x;
 
   // Maximum frequencies
   double omega_a [1] {14}; // Hz
@@ -1845,7 +1852,8 @@ void c10BarTrussFrequencyFAST :: Analysis(cVector & A, double * omega)
 
   // Replacing Area Values in Input File
   string keyword {"%SECTION.BAR.GENERAL\r"};
-  ReplaceAreas(A, keyword, base_name, 13, 70);
+  int offsets [] {13, 70, 70, 70, 70, 70, 70, 70, 70, 70};
+  ReplaceAreas(A, keyword, base_name + ".dat", offsets);
 
   // Calculating Stresses by Numerical Analysis
   system(("fast " + base_name + " -silent").c_str());
@@ -1878,7 +1886,8 @@ void c10BarTrussFrequencyDIANA :: Analysis(cVector & A, double * omega)
 
   // Replacing Area Values in Input File
   string keyword {"'GEOMET'\r"};
-  ReplaceAreas(A, keyword, base_name, 67, 80);
+  int offsets [] {52, 65, 65, 65, 65, 65, 65, 65, 65, 65};
+  ReplaceAreas(A, keyword, base_name + ".dat", offsets);
 
   // Calculating Stresses by Numerical Analysis
   system(("cmd.exe /c diana " + base_name).c_str());
