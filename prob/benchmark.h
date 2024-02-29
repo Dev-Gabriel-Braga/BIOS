@@ -483,11 +483,6 @@ class c10BarTrussFAST : public c10BarTruss {
     void Analysis(cVector &, double *, double *);
 };
 
-class c10BarTrussABAQUS : public c10BarTruss {
-  protected:
-    void Analysis(cVector &, double *, double *);
-};
-
 class c10BarTrussDIANA : public c10BarTruss {
   protected:
     void Analysis(cVector &, double *, double *);
@@ -519,11 +514,6 @@ class c10BarTrussFrequency : public c10BarTruss
 };
 
 class c10BarTrussFrequencyFAST : public c10BarTrussFrequency {
-  protected:
-    void Analysis(cVector &, double *);
-};
-
-class c10BarTrussFrequencyABAQUS : public c10BarTrussFrequency {
   protected:
     void Analysis(cVector &, double *);
 };

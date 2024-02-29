@@ -1,16 +1,17 @@
 %HEADER
 
 %OPTIMIZATION.ALGORITHM
+'StdDE'
 'StdPSO'
 
 %OPTIMIZATION.NUMBER
 1
  
 %MAXIMUM.GENERATIONS
-1
+60
 
 %POPULATION.SIZE
-1
+25
  
 %MIGRATION.GENERATION.GAP
 10
@@ -40,7 +41,8 @@
 'IntegerVector'
 
 %PROBLEM.TYPE
-'TenBarTrussFrequencyDIANA'
+'TenBarTrussFAST'
+'TenBarTrussDIANA'
 
 -----------------------------PENALTY.PARAMETERS-----------------------------
  
@@ -54,23 +56,6 @@
 
 %PENALTY.CONSTANT.FACTOR
 1.0e10
-
-------------------------GENETIC.ALGORITHM.PARAMETERS-------------------------
-
-%SELECTION.METHOD
-'Ranking'
-'FitnessProportional'
-'Tourney'
-
-%CROSSOVER.METHOD
-'LinearCombination'
-'Classical'
-
-%CROSSOVER.RATE
-0.80
-
-%MUTATION.PROBABILITY
-0.05
 
 --------------------PARTICLE.SWARM.OPTIMIZATION.PARAMETERS-------------------
 
@@ -100,21 +85,5 @@
 
 %F.WEIGHT
 0.85
-
------------------------ARTIFICIAL.BEE.COLONY.PARAMETERS----------------------      
-
-%FOOD.MAXTRIAL.RATE
-10000
-
-%FOOD.RATE
-0.5
-
-%SCOUTBEES.RATE
-0.00
-
-----------------------ARTIFICIAL.IMMUNE.SYSTEM.PARAMETERS--------------------   
-
-%HYPERMUTATE.DECAY.RATE
-5
 
 %END

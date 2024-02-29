@@ -98,7 +98,6 @@ static const bool registeredProb[] =
   cProblemFactory :: Register("ThreeBarTrussABAQUS"      , MakeProb<c3BarTrussCABAQUS>),
   cProblemFactory :: Register("ThreeBarTrussDIANA"       , MakeProb<c3BarTrussCDIANA>),
   cProblemFactory :: Register("TenBarTrussFAST"          , MakeProb<c10BarTrussFAST>),
-  cProblemFactory :: Register("TenBarTrussABAQUS"        , MakeProb<c10BarTrussABAQUS>),
   cProblemFactory :: Register("TenBarTrussDIANA"         , MakeProb<c10BarTrussDIANA>),
   cProblemFactory :: Register("TenBarTrussFrequencyFAST" , MakeProb<c10BarTrussFrequencyFAST>),
   cProblemFactory :: Register("TenBarTrussFrequencyDIANA", MakeProb<c10BarTrussFrequencyDIANA>),
@@ -1628,7 +1627,6 @@ void c10BarTruss :: ReplaceAreas(cVector & A, string keyword, string file_name, 
   input_file.close();
 }
 
-
 // ============================ Analysis ===============================
 
 void c10BarTruss :: Analysis(cVector & A, double * v, double * sigma)
@@ -1684,61 +1682,6 @@ void c10BarTrussFAST :: Analysis(cVector & A, double * v, double * sigma)
 
   // Closing Input File
   pos_file.close();
-}
-
-// ============================ c10BarTrussABAQUS :: Analysis ===============================
-
-void c10BarTrussABAQUS :: Analysis(cVector & A, double * v, double * sigma)
-{
-  // Files Base Name
-  string base_name = "TenBarTrussABAQUS";
-
-  // Opening Input File and Setting Float-point Format
-  fstream inp_file (base_name + ".inp");
-  inp_file << scientific << setprecision(5);
-
-  // Searching for Keyword Position
-  double start_position[10];
-  start_position[0] = FindPosition(inp_file, "*Solid Section, elset=A1, material=Material-1\r");
-  start_position[1] = FindPosition(inp_file, "*Solid Section, elset=A2, material=Material-1\r");
-  start_position[2] = FindPosition(inp_file, "*Solid Section, elset=A3, material=Material-1\r");
-  start_position[3] = FindPosition(inp_file, "*Solid Section, elset=A4, material=Material-1\r");
-  start_position[4] = FindPosition(inp_file, "*Solid Section, elset=A5, material=Material-1\r");
-  start_position[5] = FindPosition(inp_file, "*Solid Section, elset=A6, material=Material-1\r");
-  start_position[6] = FindPosition(inp_file, "*Solid Section, elset=A7, material=Material-1\r");
-  start_position[7] = FindPosition(inp_file, "*Solid Section, elset=A8, material=Material-1\r");
-  start_position[8] = FindPosition(inp_file, "*Solid Section, elset=A9, material=Material-1\r");
-  start_position[9] = FindPosition(inp_file, "*Solid Section, elset=A10, material=Material-1\r");
-
-  // Replacing Area Values in Input File
-  for (int i = 0; i < 10; i++){
-  if (start_position[i] != -1)
-  {
-    inp_file.seekp(start_position[i]);
-    inp_file << A[i];
-  } 
-  else
-  {
-    cout << "Warning: It were not possible to replace Area Values.\n";
-  }}
-  inp_file.close();
-
-  // Calculating Stresses by Numerical Analysis and Extracting Results
-  system(("cmd.exe /c abaqus cae noGUI=" + base_name + ".py").c_str());
-
-  // Reading Results
-  fstream txt_file (base_name + ".txt");
-  // Reading Displacements
-  for (int i = 0; i < 4; i++)
-  {
-  txt_file >> v[i];
-  }
-  // Reading Stresses
-  for (int i = 0; i < 10; i++)
-  {
-  txt_file >> sigma[i];
-  }
-  txt_file.close();
 }
 
 // ============================ c10BarTrussDIANA :: Analysis ===============================
@@ -1840,6 +1783,8 @@ void c10BarTrussFrequency :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
   fobjs[0] = mass;
 }
 
+// ============================ Analysis ===============================
+
 void c10BarTrussFrequency :: Analysis(cVector & A, double * omega)
 {}
 
@@ -1878,6 +1823,8 @@ void c10BarTrussFrequencyFAST :: Analysis(cVector & A, double * omega)
   // Closing Input File
   pos_file.close();
 }
+
+// ============================ c10BarTrussFrequencyDIANA :: Analysis ===============================
 
 void c10BarTrussFrequencyDIANA :: Analysis(cVector & A, double * omega)
 {
