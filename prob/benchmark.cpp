@@ -1287,18 +1287,6 @@ void c3BarTrussC :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
   fobjs[0] = V;
 }
 
-// ============================ FindPosition ===============================
-
-int c3BarTrussC :: FindPosition(fstream & stream, string line)
-{
-  string entry;
-  while (getline(stream, entry))
-  {
-    if (entry == line) return stream.tellp();
-  }
-  return -1;
-}
-
 // ============================ Analysis ===============================
 
 void c3BarTrussC :: Analysis(cVector & A, double * sigma)
@@ -1319,48 +1307,31 @@ void c3BarTrussCFAST :: Analysis(cVector & A, double * sigma)
   // Files Base Name
   string base_name = "ThreeBarTrussFAST";
 
-  // Opening Input File and Setting Float-point Format
-  fstream dat_file (base_name + ".dat");
-  dat_file << scientific << setprecision(5);
-
-  // Searching for Keyword Position
-  int start_position = FindPosition(dat_file, "%SECTION.BAR.GENERAL\r");
-
   // Replacing Area Values in Input File
-  if (start_position != -1)
-  {
-    dat_file.seekp(start_position + 11);
-    dat_file << A[0];
-    dat_file.seekp(start_position + 80);
-    dat_file << A[1];
-  }
-  else
-  {
-    cout << "Warning: It were not possible to replace Area Values.\n";
-  }
-  dat_file.close();
+  string keyword {"%SECTION.BAR.GENERAL"};
+  vector<int> offsets {13, 69};
+  Utl::ReplaceValues(A, keyword, base_name + ".dat", offsets);
 
   // Calculating Stresses by Numerical Analysis
   system(("fast " + base_name + " -silent").c_str());
 
-  // Reading Results
+  // Reading Normal Forces
   double N [3];
   fstream pos_file (base_name + ".pos");
-  string entry, trash;
-  while (pos_file >> entry)
+  Utl::FindKeyword(pos_file, "%RESULT.CASE.STEP.ELEMENT.NODAL.SCALAR.DATA");
+  for (int i = 0; i < 3; i++)
   {
-    if (entry == "%RESULT.CASE.STEP.ELEMENT.NODAL.SCALAR.DATA")
-    {
-      pos_file >> trash >> trash >> N[0];
-      pos_file >> trash >> trash >> N[1];
-      pos_file >> trash >> trash >> N[2];
-      break;
-    }
+    Utl::SkipEntries(pos_file, 2);
+    pos_file >> N[i];
   }
-  pos_file.close();
+
+  // Calculating Stresses
   sigma[0] = N[0] / A[0];
   sigma[1] = N[1] / A[1];
   sigma[2] = N[2] / A[0];
+
+  // Closing Output File
+  pos_file.close();
 }
 
 // ============================ c3BarTrussCABAQUS :: Analysis ===============================
@@ -1370,27 +1341,10 @@ void c3BarTrussCABAQUS :: Analysis(cVector & A, double * sigma)
   // Files Base Name
   string base_name = "ThreeBarTrussABAQUS";
 
-  // Opening Input File and Setting Float-point Format
-  fstream inp_file (base_name + ".inp");
-  inp_file << scientific << setprecision(5);
-
-  // Searching for Keyword Position
-  int start_position_1 = FindPosition(inp_file, "*Solid Section, elset=A1-A3, material=Metal\r");
-  int start_position_2 = FindPosition(inp_file, "*Solid Section, elset=A2, material=Metal\r");
-
   // Replacing Area Values in Input File
-  if (start_position_1 != -1 && start_position_2 != -1)
-  {
-    inp_file.seekp(start_position_1);
-    inp_file << A[0];
-    inp_file.seekp(start_position_2);
-    inp_file << A[1];
-  } 
-  else
-  {
-    cout << "Warning: It were not possible to replace Area Values.\n";
-  }
-  inp_file.close();
+  string keyword {"*Solid"};
+  vector<int> offsets {39, 85};
+  Utl::ReplaceValues(A, keyword, base_name + ".inp", offsets);
 
   // Calculating Stresses by Numerical Analysis and Extracting Results
   system(("cmd.exe /c abaqus cae noGUI=" + base_name + ".py").c_str());
@@ -1408,43 +1362,26 @@ void c3BarTrussCDIANA :: Analysis(cVector & A, double * sigma)
   // Files Base Name
   string base_name = "ThreeBarTrussDIANA";
 
-  // Opening Input File and Setting Float-point Format
-  fstream dat_file (base_name + ".dat");
-  dat_file << scientific << setprecision(5);
-
-  // Searching for Keyword Position
-  int start_position = FindPosition(dat_file, "'GEOMET'\r");
-
   // Replacing Area Values in Input File
-  if (start_position != -1)
-  {
-    dat_file.seekp(start_position + 67);
-    dat_file << A[0];
-    dat_file.seekp(start_position + 147);
-    dat_file << A[1];
-  }
-  else
-  {
-    cout << "Warning: It were not possible to replace Area Values.\n";
-  }
-  dat_file.close();
+  string keyword {"'GEOMET'"};
+  vector<int> offsets {69, 80};
+  Utl::ReplaceValues(A, keyword, base_name + ".dat", offsets);
   
   // Calculating Stresses by Numerical Analysis
   system(("cmd.exe /c diana " + base_name).c_str());
 
-  // Reading Results
+  // Opening Output File
   fstream tb_file (base_name + ".tb");
-  string entry, trash;
-  while (tb_file >> entry)
+  
+  // Reading Stresses
+  Utl::FindKeyword(tb_file, "Elmnr");
+  for (int i = 0; i < 3; i++)
   {
-    if (entry == "Elmnr")
-    {
-      tb_file >> trash >> trash >> trash >> trash >> sigma[0];
-      tb_file >> trash >> trash >> trash >> trash >> sigma[1];
-      tb_file >> trash >> trash >> trash >> trash >> sigma[2];
-      break;
-    }
+    Utl::SkipEntries(tb_file, 4);
+    tb_file >> sigma[i];
   }
+
+  // Closing Output File
   tb_file.close();
 }
 
@@ -1586,47 +1523,6 @@ void c10BarTruss :: Evaluate(cVector & x, cVector & c, cVector & fobjs)
   fobjs[0] = mass;
 }
 
-// ============================ FindPosition ===============================
-
-int c10BarTruss :: FindPosition(fstream & stream, string line)
-{
-  string entry;
-  while (getline(stream, entry))
-  {
-    if (entry == line) return stream.tellp();
-  }
-  return -1;
-}
-
-// ============================ FindPosition ===============================
-
-void c10BarTruss :: ReplaceAreas(cVector & A, string keyword, string file_name, int * offsets)
-{
-  // Opening Input File
-  fstream input_file (file_name);
-  input_file << scientific << setprecision(5);
-
-  // Searching for Keyword Position
-  int start_position = FindPosition(input_file, keyword);
-
-  // Replacing Area Values in Input File
-  int offset {0};
-  if (start_position != -1)
-  {
-    for (int i = 0; i < NumVar; i++)
-    {
-      offset += offsets[i];
-      input_file.seekp(start_position + offset);
-      input_file << A[i];
-    }
-  }
-  else
-  {
-    cout << "Warning: It were not possible to replace Area Values.\n";
-  }
-  input_file.close();
-}
-
 // ============================ Analysis ===============================
 
 void c10BarTruss :: Analysis(cVector & A, double * v, double * sigma)
@@ -1640,44 +1536,33 @@ void c10BarTrussFAST :: Analysis(cVector & A, double * v, double * sigma)
   string base_name = "TenBarTrussFAST";
 
   // Replacing Area Values in Input File
-  string keyword {"%SECTION.BAR.GENERAL\r"};
-  int offsets [] {13, 70, 70, 70, 70, 70, 70, 70, 70, 70};
-  ReplaceAreas(A, keyword, base_name + ".dat", offsets);
+  string keyword {"%SECTION.BAR.GENERAL"};
+  vector<int> offsets {15, 70, 70, 70, 70, 70, 70, 70, 70, 70};
+  Utl::ReplaceValues(A, keyword, base_name + ".dat", offsets);
 
   // Calculating Stresses by Numerical Analysis
   system(("fast " + base_name + " -silent").c_str());
 
   // Opening Output File
   fstream pos_file (base_name + ".pos");
-  string entry, trash;
 
   // Reading Displacements
-  while (pos_file >> entry)
+  Utl::FindKeyword(pos_file, "%RESULT.CASE.STEP.NODAL.DISPLACEMENT");
+  Utl::SkipEntries(pos_file, 4);
+  for (int i = 0; i < 4; i++)
   {
-    if (entry == "%RESULT.CASE.STEP.NODAL.DISPLACEMENT")
-    {
-      pos_file >> trash >> trash >> trash >> trash;
-      for (int i = 0; i < 4; i++)
-      {
-        pos_file >> v[i] >> trash >> trash >> trash >> trash >> trash >> trash;
-      }
-      break;
-    }
+    pos_file >> v[i];
+    Utl::SkipEntries(pos_file, 6);
   }
 
   // Reading Stresses
   double N [10];
-  while (pos_file >> entry)
+  Utl::FindKeyword(pos_file, "%RESULT.CASE.STEP.ELEMENT.NODAL.SCALAR.DATA");
+  for (int i = 0; i < 10; i++)
   {
-    if (entry == "%RESULT.CASE.STEP.ELEMENT.NODAL.SCALAR.DATA")
-    {
-      for (int i = 0; i < 10; i++)
-      {
-        pos_file >> trash >> trash >> N[i];
-        sigma[i] = N[i] / A[i];
-      }
-      break;
-    }
+    Utl::SkipEntries(pos_file, 2);
+    pos_file >> N[i];
+    sigma[i] = N[i] / A[i];
   }
 
   // Closing Input File
@@ -1692,42 +1577,34 @@ void c10BarTrussDIANA :: Analysis(cVector & A, double * v, double * sigma)
   string base_name = "TenBarTrussDIANA";
 
   // Replacing Area Values in Input File
-  string keyword {"'GEOMET'\r"};
-  int offsets [] {67, 80, 80, 80, 80, 80, 80, 80, 80, 81};
-  ReplaceAreas(A, keyword, base_name + ".dat", offsets);
+  string keyword {"'GEOMET'"};
+  vector<int> offsets {69, 80, 80, 80, 80, 80, 80, 80, 80, 81};
+  Utl::ReplaceValues(A, keyword, base_name + ".dat", offsets);
   
   // Calculating Stresses by Numerical Analysis
   system(("cmd.exe /c diana " + base_name).c_str());
 
-  // Reading Displacements
+  // Opening Output File
   fstream tb_file (base_name + ".tb");
-  string entry, trash;
-  while (tb_file >> entry)
+  
+  // Reading Displacements
+  Utl::FindKeyword(tb_file, "Nodnr");
+  Utl::SkipEntries(tb_file, 5);
+  for (int i = 0; i < 4; i++)
   {
-    if (entry == "Nodnr")
-    {
-      tb_file >> trash >> trash >> trash >> trash >> trash;
-      for (int i = 0; i < 4; i++)
-      {
-        tb_file >> v[i] >> trash >> trash >> trash;
-      }
-      break;
-    }
+    tb_file >> v[i];
+    Utl::SkipEntries(tb_file, 3);
   }
 
   // Reading Stresses
-  while (tb_file >> entry)
+  Utl::FindKeyword(tb_file, "Elmnr");
+  for (int i = 0; i < 10; i++)
   {
-    if (entry == "Elmnr")
-    {
-      for (int i = 0; i < 10; i++)
-      {
-        tb_file >> trash >> trash >> trash >> trash >> sigma[i];
-      }
-      break;
-    }
+    Utl::SkipEntries(tb_file, 4);
+    tb_file >> sigma[i];
   }
 
+  // Closing Output File
   tb_file.close();
 }
 
@@ -1796,26 +1673,18 @@ void c10BarTrussFrequencyFAST :: Analysis(cVector & A, double * omega)
   string base_name = "TenBarTrussFrequencyFAST";
 
   // Replacing Area Values in Input File
-  string keyword {"%SECTION.BAR.GENERAL\r"};
-  int offsets [] {13, 70, 70, 70, 70, 70, 70, 70, 70, 70};
-  ReplaceAreas(A, keyword, base_name + ".dat", offsets);
+  string keyword {"%SECTION.BAR.GENERAL"};
+  vector<int> offsets {15, 70, 70, 70, 70, 70, 70, 70, 70, 70};
+  Utl::ReplaceValues(A, keyword, base_name + ".dat", offsets);
 
   // Calculating Stresses by Numerical Analysis
   system(("fast " + base_name + " -silent").c_str());
 
-  // Opening Output File
+  // Opening Output File and Reading Natural Frequency
   fstream pos_file (base_name + ".pos");
-  string entry, trash;
-
-  // Reading Frequencies
-  while (pos_file >> entry)
-  {
-    if (entry == "%RESULT.CASE.STEP.NATURAL.FREQUENCY")
-    {
-      pos_file >> trash >> omega[0];
-      break;
-    }
-  }
+  Utl::FindKeyword(pos_file, "%RESULT.CASE.STEP.NATURAL.FREQUENCY");
+  Utl::SkipEntries(pos_file, 1);
+  pos_file >> omega[0];
 
   // Converting Natural Frenquency
    omega[0] /= 2 * PI;
@@ -1832,24 +1701,17 @@ void c10BarTrussFrequencyDIANA :: Analysis(cVector & A, double * omega)
   string base_name = "TenBarTrussFrequencyDIANA";
 
   // Replacing Area Values in Input File
-  string keyword {"'GEOMET'\r"};
-  int offsets [] {52, 65, 65, 65, 65, 65, 65, 65, 65, 65};
-  ReplaceAreas(A, keyword, base_name + ".dat", offsets);
+  string keyword {"'GEOMET'"};
+  vector<int> offsets {54, 65, 65, 65, 65, 65, 65, 65, 65, 65};
+  Utl::ReplaceValues(A, keyword, base_name + ".dat", offsets);
 
   // Calculating Stresses by Numerical Analysis
   system(("cmd.exe /c diana " + base_name).c_str());
 
   // Reading Frequencies
   fstream tb_file (base_name + ".tb");
-  string entry, trash;
-  while (tb_file >> entry)
-  {
-    if (entry == "frequency")
-    {
-      tb_file >> omega[0];
-      break;
-    }
-  }
+  Utl::FindKeyword(tb_file, "frequency");
+  tb_file >> omega[0];
 
   // Closing Input File
   tb_file.close();

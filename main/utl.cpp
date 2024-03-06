@@ -33,8 +33,12 @@
 
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <iomanip>
+#include <string>
 
 #include "utl.h"
+#include "vec.h"
 
 static unsigned int seed = 1; 
 
@@ -137,6 +141,56 @@ void Utl :: SetSeed(unsigned int s)
 {
   seed = s;
   srand(seed);
+}
+
+// ============================ FindPosition ==========================
+
+int Utl :: FindKeyword(fstream & stream, string line)
+{
+  string entry;
+  while (stream >> entry)
+  {
+    if (entry == line)
+    {
+      return stream.tellp();
+    }
+  }
+  Utl::Exit("Error: The line value \"" + line + "\" was not found.");
+}
+
+// ============================ FindPosition ===============================
+
+void Utl :: ReplaceValues(cVector & values, string keyword, string file_name, vector<int> offsets, int precision)
+{
+  // Opening Input File
+  fstream input_file (file_name);
+  input_file << scientific << setprecision(precision);
+
+  // Searching for Keyword Position
+  int start_position = Utl::FindKeyword(input_file, keyword);
+
+  // Replacing Area Values in Input File
+  int offset {0};
+  for (int i = 0; i < offsets.size(); i++)
+  {
+    offset += offsets.at(i);
+    input_file.seekp(start_position + offset);
+    input_file << values[i];
+  }
+
+  // Closing Input File
+  input_file.close();
+}
+
+// ============================ FindPosition ==========================
+
+void Utl :: SkipEntries(fstream & stream, int n_entries)
+{
+  string trash;
+  for (int i = 0; i < n_entries; i++)
+  {
+    stream >> trash;
+  }
 }
 
 // =============================================== End of file ========

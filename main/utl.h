@@ -35,21 +35,28 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
+
+#include "vec.h"
+
 using namespace std;
 
 class Utl
 {
  public:
-  static int    NextLabel   (ifstream &fp, char *s);
-  static int    ReadString  (istream &fp, char *s);
-  static int    RandInt     (int floor, int ceiling);
-  static double RandDec     (void);
-  static double RandDouble  (double floor, double ceiling);
-  static double Min         (double val1, double val2);
-  static double Max         (double val1, double val2);
-  static void   Exit        (string messeger);
-  static int    GetSeed     (void); 
-  static void   SetSeed     (unsigned int); 
+  static int    NextLabel     (ifstream &fp, char *s);
+  static int    ReadString    (istream &fp, char *s);
+  static int    RandInt       (int floor, int ceiling);
+  static double RandDec       (void);
+  static double RandDouble    (double floor, double ceiling);
+  static double Min           (double val1, double val2);
+  static double Max           (double val1, double val2);
+  static void   Exit          (string messeger);
+  static int    GetSeed       (void); 
+  static void   SetSeed       (unsigned int);
+  static int    FindKeyword   (fstream &, string);
+  static void   ReplaceValues (cVector &, string, string, vector<int>, int = 5);
+  static void   SkipEntries   (fstream &, int);
 };
 
 #endif

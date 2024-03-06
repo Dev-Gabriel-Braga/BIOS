@@ -408,7 +408,6 @@ class c3BarTrussC : public cBenchContinuous
   void         GetApproxConstr(bool * c) { c[0] = 1; c[1] = 1; c[2] = 1; }
 
   protected:
-    int FindPosition(fstream &, string);
     virtual void Analysis(cVector &, double *);
 };
 
@@ -473,8 +472,6 @@ class c10BarTruss : public cBenchContinuous
     virtual void Evaluate(cVector &, cVector &, cVector &);
 
   protected:
-    int FindPosition(fstream &, string);
-    void ReplaceAreas(cVector &, string, string, int *);
     virtual void Analysis(cVector &, double *, double *);
 };
 
