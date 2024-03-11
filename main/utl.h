@@ -55,7 +55,7 @@ class Utl
   static int    GetSeed       (void); 
   static void   SetSeed       (unsigned int);
   static int    FindKeyword   (fstream &, string);
-  static void   ReplaceValues (cVector &, string, string, vector<int>, int = 5);
+  static void   ReplaceValues (int, cVector &, string, vector<int>, int = 5);
   static void   SkipEntries   (fstream &, int);
 };
 

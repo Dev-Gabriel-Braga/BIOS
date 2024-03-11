@@ -160,14 +160,11 @@ int Utl :: FindKeyword(fstream & stream, string line)
 
 // ============================ FindPosition ===============================
 
-void Utl :: ReplaceValues(cVector & values, string keyword, string file_name, vector<int> offsets, int precision)
+void Utl :: ReplaceValues(int start_position, cVector & values, string file_name, vector<int> offsets, int precision)
 {
   // Opening Input File
   fstream input_file (file_name);
   input_file << scientific << setprecision(precision);
-
-  // Searching for Keyword Position
-  int start_position = Utl::FindKeyword(input_file, keyword);
 
   // Replacing Area Values in Input File
   int offset {0};

@@ -408,20 +408,34 @@ class c3BarTrussC : public cBenchContinuous
   void         GetApproxConstr(bool * c) { c[0] = 1; c[1] = 1; c[2] = 1; }
 
   protected:
+    int StartPosition;
+    string FileBaseName;
     virtual void Analysis(cVector &, double *);
 };
 
 class c3BarTrussCFAST : public c3BarTrussC {
+  public:
+    c3BarTrussCFAST(void);
+    ~c3BarTrussCFAST(void) {};
+
   protected:
     void Analysis(cVector &, double *);
 };
 
 class c3BarTrussCABAQUS : public c3BarTrussC {
+  public:
+    c3BarTrussCABAQUS(void);
+    ~c3BarTrussCABAQUS(void) {};
+    
   protected:
     void Analysis(cVector &, double *);
 };
 
 class c3BarTrussCDIANA : public c3BarTrussC {
+  public:
+    c3BarTrussCDIANA(void);
+    ~c3BarTrussCDIANA(void) {};
+    
   protected:
     void Analysis(cVector &, double *);
 };
@@ -472,15 +486,25 @@ class c10BarTruss : public cBenchContinuous
     virtual void Evaluate(cVector &, cVector &, cVector &);
 
   protected:
+    int StartPosition;
+    string FileBaseName;
     virtual void Analysis(cVector &, double *, double *);
 };
 
 class c10BarTrussFAST : public c10BarTruss {
+  public:
+    c10BarTrussFAST(void);
+    ~c10BarTrussFAST(void) {};
+
   protected:
     void Analysis(cVector &, double *, double *);
 };
 
 class c10BarTrussDIANA : public c10BarTruss {
+  public:
+    c10BarTrussDIANA(void);
+    ~c10BarTrussDIANA(void) {};
+
   protected:
     void Analysis(cVector &, double *, double *);
 };
@@ -511,11 +535,19 @@ class c10BarTrussFrequency : public c10BarTruss
 };
 
 class c10BarTrussFrequencyFAST : public c10BarTrussFrequency {
+  public:
+    c10BarTrussFrequencyFAST(void);
+    ~c10BarTrussFrequencyFAST(void) {};
+
   protected:
     void Analysis(cVector &, double *);
 };
 
 class c10BarTrussFrequencyDIANA : public c10BarTrussFrequency {
+  public:
+    c10BarTrussFrequencyDIANA(void);
+    ~c10BarTrussFrequencyDIANA(void) {};
+
   protected:
     void Analysis(cVector &, double *);
 };
