@@ -1,0 +1,37 @@
+# Adding Sources to Executable Target
+target_sources(bios PUBLIC
+   algparam.cpp
+   algparam.h
+   lamalg.cpp
+   lamalg.h
+   lamga.cpp
+   lamga.h
+   modlamnsgaII.cpp
+   modlamnsgaII.h
+   modnsgaII.cpp
+   modnsgaII.h
+   modpso.cpp
+   modpso.h
+   optalg.cpp
+   optalg.h
+   rs.cpp
+   rs.h
+   sao.cpp
+   sao.h
+   saokrg.cpp
+   saokrg.h
+   saorbf.cpp
+   saorbf.h
+   sel.cpp
+   sel.h
+   stdabc.cpp
+   stdabc.h
+   stdais.cpp
+   stdais.h
+   stdde.cpp
+   stdde.h
+   stdga.cpp
+   stdga.h
+   stdpso.cpp
+   stdpso.h
+)

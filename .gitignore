@@ -1,3 +1,16 @@
+# File System Archives
+desktop.ini
+thumbs.db
+.DS_Store
+
+# Unwanted Project Files and Folders
 .vscode
-obj/*.o
+.vs
+CMakeLists.txt.user
+CMakeSettings.json
+
+# Build Files
+bin
+build
+out
 bios
